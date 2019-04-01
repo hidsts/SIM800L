@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"sim800l.obj" 
+TO "sim800l" 
+RAMSIZE(256) 
