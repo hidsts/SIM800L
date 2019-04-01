@@ -1,4 +1,4 @@
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 1   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 1   
 
 
 C51 COMPILER V9.01, COMPILATION OF MODULE SIM800L
@@ -13,7 +13,7 @@ line level    source
    4          #define LENGTH 400              // 收到一条最大短信大概350字节
    5          
    6          unsigned char code TC_CONNECT[] = "AT";                                 // 发送内容连接
-   7          unsigned char code TC_RUNMODE[] = "AT+CNMI=1,2,0,0,0";  // 发送内容模式
+   7          unsigned char code TC_RUNMODE[] = "AT+CNMI=2,2,0,0,0";  // 发送内容模式
    8          
    9          unsigned char code TC_TCP_CHECKSIM[] = "AT+CPIN?";              // 1.检查SIM状态
   10          unsigned char code TC_TCP_CHECKNET[] = "AT+CSQ";                        // 2.检查网络信号强度
@@ -62,7 +62,7 @@ line level    source
   53          /*******************************************************************************
   54          * 函 数 名         : main
   55          * 函数功能                 : 主函数
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 2   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 2   
 
   56          * 输    入         : 无
   57          * 输    出         : 无
@@ -126,7 +126,7 @@ line level    source
  115          void clean_r_datas()
  116          {
  117   1              memset(r_datas,0,sizeof(r_datas));
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 3   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 3   
 
  118   1              index = 0;
  119   1      }
@@ -190,7 +190,7 @@ line level    source
  177   2                      P0 = 0x02;       // 0000 0010
  178   2      
  179   2                      send_byte(0x57);                // W
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 4   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 4   
 
  180   2                      send_byte(0x41);                // A
  181   2                      send_byte(0x49);                // I
@@ -205,9 +205,9 @@ line level    source
  190   2                      if(p != NULL)
  191   2                      {
  192   3                              P0 = 0xa5;       // 1010 0101
- 193   3                              send_byte(0x53);   // S
+ 193   3      //                      send_byte(0x53);   // S
  194   3      //                      print_r_datas();
- 195   3                              send_byte(0x53);
+ 195   3      //                      send_byte(0x53);
  196   3      
  197   3                              // 将收到的数据缓存
  198   3                              strcpy(t_datas,r_datas);
@@ -254,7 +254,7 @@ line level    source
  239   1      
  240   1              tcp_9_sendtext();
  241   1      //      clean_r_datas();        // 后面无判断，注释掉提高运行速度
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 5   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 5   
 
  242   1      
  243   1              tcp_10_close();
@@ -318,7 +318,7 @@ line level    source
  301   2                      if(p != NULL)
  302   2                      {
  303   3                              P0 = 0x08;       // 0000 1000
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 6   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 6   
 
  304   3      
  305   3                              break;
@@ -382,7 +382,7 @@ line level    source
  363   3                              P0 = 0x20;       // 0010 0000
  364   3      
  365   3                              break;
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 7   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 7   
 
  366   3                      }
  367   2              }
@@ -446,7 +446,7 @@ line level    source
  425   1      //      }
  426   1      
  427   1      }
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 8   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 8   
 
  428          
  429          void tcp_7_getip()
@@ -496,13 +496,13 @@ line level    source
  473   2      
  474   2                      P0 = 0x0c;       // 0000 1100
  475   2      
- 476   2                      send_byte(0x30); // 0
- 477   2                      send_byte(0x0d);
- 478   2                      send_byte(0x0a);
- 479   2                      print_r_datas();
- 480   2                      send_byte(0x0d);
- 481   2                      send_byte(0x0a);
- 482   2                      send_byte(0x30); // 0
+ 476   2      //              send_byte(0x30); // 0
+ 477   2      //              send_byte(0x0d);
+ 478   2      //              send_byte(0x0a);
+ 479   2      //              print_r_datas();
+ 480   2      //              send_byte(0x0d);
+ 481   2      //              send_byte(0x0a);
+ 482   2      //              send_byte(0x30); // 0
  483   2      
  484   2      
  485   2                      //正确返回：
@@ -510,7 +510,7 @@ line level    source
  487   2      
  488   2                      //CONNECT OK
  489   2                      p = strstr(r_datas,"CONNECT OK");
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 9   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 9   
 
  490   2                      if(p != NULL)
  491   2                      {
@@ -535,7 +535,7 @@ line level    source
  510   3                      }
  511   2                      send_byte(0x0d);
  512   2                      send_byte(0x0a);
- 513   2                      Delay10ms(5); // 在调试的时候需要把延迟加大，向串口发送'>'字符串，才会向TCP服务器发送数据
+ 513   2                      Delay10ms(5); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
  514   2                                                      // 连接模块的时候可以适当调小
  515   2                      P0 = 0x30;       // 0011 0000
  516   2      
@@ -559,7 +559,7 @@ line level    source
  534   1      
  535   1              while(1)
  536   1              {
- 537   2                      for(j = 13;j < strlen(t_datas); j++)
+ 537   2                      for(j = 16;j < strlen(t_datas); j++)     // 跳过短信前面的无效字符从长度开始发
  538   2                      {
  539   3                              send_byte(t_datas[j]);
  540   3                      }
@@ -568,131 +568,132 @@ line level    source
  543   2                      send_byte(0x1a);
  544   2                      
  545   2      //              Delay10ms(10);          // 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明  
- 546   2      
- 547   2                      P0 = 0xc0;       // 1100 0000
- 548   2      
- 549   2              
- 550   2                      g = strstr(r_datas,"SEND OK");
- 551   2                      if(g != NULL)
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 10  
+ 546   2                      
+ 547   2                      send_byte(0x3e);        // '>'
+ 548   2                      P0 = 0xc0;       // 1100 0000
+ 549   2      
+ 550   2              
+ 551   2                      g = strstr(r_datas,"SEND OK");
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 10  
 
- 552   2                      {
- 553   3                              P0 = 0xe0;       // 1110 0000
- 554   3      
- 555   3                              // 清空t_datas
- 556   3                              memset(t_datas,0,sizeof(t_datas)*LENGTH);
- 557   3                              break;
- 558   3                      }
- 559   2              }
- 560   1      }
- 561          
- 562          void tcp_10_close()
- 563          {
- 564   1              int i;
- 565   1              unsigned char *p;
- 566   1      
- 567   1      //      while(1)
- 568   1      //      {
- 569   1                      for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
- 570   1                      {
- 571   2                              send_byte(TC_TCP_CLOSE[i]);
- 572   2                      }
- 573   1                      send_byte(0x0d);
- 574   1                      send_byte(0x0a);
- 575   1                      Delay10ms(5);
- 576   1      
- 577   1                      P0 = 0x07;       // 0000 0111
- 578   1      
- 579   1                      // 发送成功返回的是字符串 "CLOSE OK"
- 580   1                      p = strstr(r_datas,"OK");
- 581   1                      if(p != NULL)
- 582   1                      {
- 583   2      //                      break;
- 584   2                      }
- 585   1      //      }
- 586   1      
- 587   1      }
- 588          
- 589          void tcp_11_shut()
- 590          {
- 591   1              int i;
- 592   1              unsigned char *p;
- 593   1              
- 594   1              for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
- 595   1              {
- 596   2                      send_byte(TC_TCP_SHUT[i]);
- 597   2              }
- 598   1              send_byte(0x0d);
- 599   1              send_byte(0x0a);
- 600   1              Delay10ms(5);   
- 601   1      
- 602   1              p = strstr(r_datas,"SHUT OK");
- 603   1      
- 604   1              if(p != NULL)
- 605   1              {
- 606   2                      //do something
- 607   2              }
- 608   1      
- 609   1              P0 = 0x38;       // 0011 1000
- 610   1      
- 611   1      }
- 612          
+ 552   2                      if(g != NULL)
+ 553   2                      {
+ 554   3                              P0 = 0xe0;       // 1110 0000
+ 555   3      
+ 556   3                              // 清空t_datas
+ 557   3                              memset(t_datas,0,sizeof(t_datas));
+ 558   3                              break;
+ 559   3                      }
+ 560   2              }
+ 561   1      }
+ 562          
+ 563          void tcp_10_close()
+ 564          {
+ 565   1              int i;
+ 566   1              unsigned char *p;
+ 567   1      
+ 568   1      //      while(1)
+ 569   1      //      {
+ 570   1                      for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
+ 571   1                      {
+ 572   2                              send_byte(TC_TCP_CLOSE[i]);
+ 573   2                      }
+ 574   1                      send_byte(0x0d);
+ 575   1                      send_byte(0x0a);
+ 576   1                      Delay10ms(5);
+ 577   1      
+ 578   1                      P0 = 0x07;       // 0000 0111
+ 579   1      
+ 580   1                      // 发送成功返回的是字符串 "CLOSE OK"
+ 581   1                      p = strstr(r_datas,"OK");
+ 582   1                      if(p != NULL)
+ 583   1                      {
+ 584   2      //                      break;
+ 585   2                      }
+ 586   1      //      }
+ 587   1      
+ 588   1      }
+ 589          
+ 590          void tcp_11_shut()
+ 591          {
+ 592   1              int i;
+ 593   1              unsigned char *p;
+ 594   1              
+ 595   1              for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
+ 596   1              {
+ 597   2                      send_byte(TC_TCP_SHUT[i]);
+ 598   2              }
+ 599   1              send_byte(0x0d);
+ 600   1              send_byte(0x0a);
+ 601   1              Delay10ms(5);   
+ 602   1      
+ 603   1              p = strstr(r_datas,"SHUT OK");
+ 604   1      
+ 605   1              if(p != NULL)
+ 606   1              {
+ 607   2                      //do something
+ 608   2              }
+ 609   1      
+ 610   1              P0 = 0x38;       // 0011 1000
+ 611   1      
+ 612   1      }
  613          
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 14:31:40 PAGE 11  
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 11  
 
  614          
  615          
- 616          void serial() interrupt 4
- 617          {
- 618   1              if(RI == 1)
- 619   1              {
- 620   2                      RI = 0;
- 621   2      //              index = 0;
- 622   2                      r_datas[index++] = SBUF;
- 623   2                      if(index > MAX)
- 624   2                      {
- 625   3                              MAX = index;
- 626   3                      }
- 627   2                      if(index > sizeof(r_datas))
- 628   2                      {
- 629   3                              index = 0;
- 630   3                      }
- 631   2      
- 632   2              }
- 633   1      }
- 634          
+ 616          
+ 617          void serial() interrupt 4
+ 618          {
+ 619   1              if(RI == 1)
+ 620   1              {
+ 621   2                      RI = 0;
+ 622   2      //              index = 0;
+ 623   2                      r_datas[index++] = SBUF;
+ 624   2                      if(index > MAX)
+ 625   2                      {
+ 626   3                              MAX = index;
+ 627   3                      }
+ 628   2                      if(index > sizeof(r_datas))
+ 629   2                      {
+ 630   3                              index = 0;
+ 631   3                      }
+ 632   2      
+ 633   2              }
+ 634   1      }
  635          
  636          
- 637          void UsartConfiguration()
- 638          {
- 639   1              SCON=0X50;                      //设置为工作方式1
- 640   1              TMOD=0X20;                      //设置计数器工作方式2
- 641   1              PCON=0X80;                      //波特率加倍
- 642   1              TH1=0XF3;                   //计数器初始值设置，注意波特率是4800的
- 643   1              TL1=0XF3;
- 644   1              ES=1;                                           //打开接收中断
- 645   1              EA=1;                                           //打开总中断
- 646   1              TR1=1;                                      //打开计数器
- 647   1      }
- 648          
+ 637          
+ 638          void UsartConfiguration()
+ 639          {
+ 640   1              SCON=0X50;                      //设置为工作方式1
+ 641   1              TMOD=0X20;                      //设置计数器工作方式2
+ 642   1              PCON=0X80;                      //波特率加倍
+ 643   1              TH1=0XF3;                   //计数器初始值设置，注意波特率是4800的
+ 644   1              TL1=0XF3;
+ 645   1              ES=1;                                           //打开接收中断
+ 646   1              EA=1;                                           //打开总中断
+ 647   1              TR1=1;                                      //打开计数器
+ 648   1      }
  649          
- 650          void Delay10ms(unsigned int c)   //误差 0us
- 651          {
- 652   1          unsigned char a, b;
- 653   1      
- 654   1              //--c已经在传递过来的时候已经赋值了，所以在for语句第一句就不用赋值了--//
- 655   1          for (;c>0;c--)
- 656   1              {
- 657   2                      for (b=38;b>0;b--)
- 658   2                      {
- 659   3                              for (a=130;a>0;a--);
- 660   3                      }          
- 661   2              }       
- 662   1      }
+ 650          
+ 651          void Delay10ms(unsigned int c)   //误差 0us
+ 652          {
+ 653   1          unsigned char a, b;
+ 654   1      
+ 655   1              //--c已经在传递过来的时候已经赋值了，所以在for语句第一句就不用赋值了--//
+ 656   1          for (;c>0;c--)
+ 657   1              {
+ 658   2                      for (b=38;b>0;b--)
+ 659   2                      {
+ 660   3                              for (a=130;a>0;a--);
+ 661   3                      }          
+ 662   2              }       
+ 663   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1363    ----
+   CODE SIZE        =   1327    ----
    CONSTANT SIZE    =    201    ----
    XDATA SIZE       =    800    ----
    PDATA SIZE       =   ----    ----

@@ -4,7 +4,7 @@
 #define LENGTH 400		// 收到一条最大短信大概350字节
 
 unsigned char code TC_CONNECT[] = "AT";					// 发送内容连接
-unsigned char code TC_RUNMODE[] = "AT+CNMI=1,2,0,0,0";	// 发送内容模式
+unsigned char code TC_RUNMODE[] = "AT+CNMI=2,2,0,0,0";	// 发送内容模式
 
 unsigned char code TC_TCP_CHECKSIM[] = "AT+CPIN?";		// 1.检查SIM状态
 unsigned char code TC_TCP_CHECKNET[] = "AT+CSQ";			// 2.检查网络信号强度
@@ -190,9 +190,9 @@ void sim800l_wait_sms()
 		if(p != NULL)
 		{
 			P0 = 0xa5;	 // 1010 0101
-			send_byte(0x53);   // S
+//			send_byte(0x53);   // S
 //			print_r_datas();
-			send_byte(0x53);
+//			send_byte(0x53);
 
 			// 将收到的数据缓存
 			strcpy(t_datas,r_datas);
@@ -473,13 +473,13 @@ void tcp_8_toserver()
 
 		P0 = 0x0c;	 // 0000 1100
 
-		send_byte(0x30); // 0
-		send_byte(0x0d);
-		send_byte(0x0a);
-		print_r_datas();
-		send_byte(0x0d);
-		send_byte(0x0a);
-		send_byte(0x30); // 0
+//		send_byte(0x30); // 0
+//		send_byte(0x0d);
+//		send_byte(0x0a);
+//		print_r_datas();
+//		send_byte(0x0d);
+//		send_byte(0x0a);
+//		send_byte(0x30); // 0
 
 
 		//正确返回：
@@ -510,7 +510,7 @@ void tcp_9_sendtext()
 		}
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5); // 在调试的时候需要把延迟加大，向串口发送'>'字符串，才会向TCP服务器发送数据
+		Delay10ms(5); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
 						// 连接模块的时候可以适当调小
 		P0 = 0x30;	 // 0011 0000
 
@@ -534,7 +534,7 @@ void tcp_9_sendtext()
 
 	while(1)
 	{
-		for(j = 13;j < strlen(t_datas); j++)
+		for(j = 16;j < strlen(t_datas); j++)	 // 跳过短信前面的无效字符从长度开始发
 		{
 			send_byte(t_datas[j]);
 		}
@@ -543,7 +543,8 @@ void tcp_9_sendtext()
 		send_byte(0x1a);
 		
 //		Delay10ms(10);		// 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明	
-
+	   	
+		send_byte(0x3e);	// '>'
 		P0 = 0xc0;	 // 1100 0000
 
 	
@@ -553,7 +554,7 @@ void tcp_9_sendtext()
 			P0 = 0xe0;	 // 1110 0000
 
 			// 清空t_datas
-			memset(t_datas,0,sizeof(t_datas)*LENGTH);
+			memset(t_datas,0,sizeof(t_datas));
 			break;
 		}
 	}
