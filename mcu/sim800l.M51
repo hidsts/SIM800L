@@ -1,4 +1,4 @@
-BL51 BANKED LINKER/LOCATER V6.22                                                        04/01/2019  16:16:10  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22                                                        04/01/2019  23:40:57  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
@@ -38,7 +38,7 @@ LINK MAP OF MODULE:  sim800l (?C_STARTUP)
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
-            CODE    0003H     001FH     UNIT         ?PR?MAIN?SIM800L
+            CODE    0003H     001FH     UNIT         ?PR?TCP_5_SETAPN?SIM800L
                     0022H     0001H                  *** GAP ***
             CODE    0023H     0003H     ABSOLUTE     
             CODE    0026H     0331H     UNIT         ?C_INITSEG
@@ -59,19 +59,19 @@ LINK MAP OF MODULE:  sim800l (?C_STARTUP)
             CODE    0996H     0039H     UNIT         ?PR?PRINT_R_DATAS?SIM800L
             CODE    09CFH     0039H     UNIT         ?PR?PRINT_T_DATAS?SIM800L
             CODE    0A08H     0039H     UNIT         ?PR?TCP?SIM800L
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 2
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 2
 
 
             CODE    0A41H     0037H     UNIT         ?PR?TCP_10_CLOSE?SIM800L
             CODE    0A78H     0037H     UNIT         ?PR?TCP_11_SHUT?SIM800L
             CODE    0AAFH     0027H     UNIT         ?PR?_DELAY10MS?SIM800L
-            CODE    0AD6H     001FH     UNIT         ?PR?TCP_5_SETAPN?SIM800L
-            CODE    0AF5H     001FH     UNIT         ?PR?TCP_6_GETLINK?SIM800L
-            CODE    0B14H     001FH     UNIT         ?PR?TCP_7_GETIP?SIM800L
-            CODE    0B33H     0016H     UNIT         ?PR?USARTCONFIGURATION?SIM800L
-            CODE    0B49H     0015H     UNIT         ?PR?CLEAN_R_DATAS?SIM800L
-            CODE    0B5EH     0015H     UNIT         ?PR?_STRLEN?STRLEN
-            CODE    0B73H     000EH     UNIT         ?PR?_SEND_BYTE?SIM800L
+            CODE    0AD6H     001FH     UNIT         ?PR?TCP_6_GETLINK?SIM800L
+            CODE    0AF5H     001FH     UNIT         ?PR?TCP_7_GETIP?SIM800L
+            CODE    0B14H     001CH     UNIT         ?PR?MAIN?SIM800L
+            CODE    0B30H     0016H     UNIT         ?PR?USARTCONFIGURATION?SIM800L
+            CODE    0B46H     0015H     UNIT         ?PR?CLEAN_R_DATAS?SIM800L
+            CODE    0B5BH     0015H     UNIT         ?PR?_STRLEN?STRLEN
+            CODE    0B70H     000EH     UNIT         ?PR?_SEND_BYTE?SIM800L
 
 
 
@@ -119,7 +119,7 @@ SEGMENT                                   DATA_GROUP
   +--> ?PR?TCP?SIM800L
 
 ?PR?TCP?SIM800L                         -----    -----
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 3
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 3
 
 
   +--> ?PR?TCP_1_CHECKSIM?SIM800L
@@ -179,7 +179,7 @@ SEGMENT                                   DATA_GROUP
   +--> ?PR?_SEND_BYTE?SIM800L
   +--> ?PR?_DELAY10MS?SIM800L
   +--> ?PR?_STRSTR?STRSTR
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 4
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 4
 
 
 
@@ -239,7 +239,7 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   C:060BH         LINE#         134
   C:060CH         LINE#         135
   C:060DH         LINE#         136
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 5
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 5
 
 
   C:060FH         LINE#         185
@@ -267,11 +267,11 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   B:0098H.1       PUBLIC        TI
   C:0717H         PUBLIC        sim800l_wait_sms
   C:0818H         PUBLIC        sim800l_connect
-  C:0003H         PUBLIC        main
+  C:0B14H         PUBLIC        main
   D:0099H         PUBLIC        SBUF
   D:0087H         PUBLIC        PCON
   C:0A78H         PUBLIC        tcp_11_shut
-  C:0AF5H         PUBLIC        tcp_6_getlink
+  C:0AD6H         PUBLIC        tcp_6_getlink
   C:052CH         PUBLIC        TC_TCP_SENDTEXT
   D:0098H         PUBLIC        SCON
   C:0ABDH         PUBLIC        _Delay10ms
@@ -281,363 +281,362 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   C:04FAH         PUBLIC        TC_TCP_GETIP
   C:0503H         PUBLIC        TC_TCP_TOSERVER
   C:07D0H         PUBLIC        tcp_8_toserver
-  C:0B79H         PUBLIC        _send_byte
+  C:0B76H         PUBLIC        _send_byte
   C:0A08H         PUBLIC        tcp
-  C:0B49H         PUBLIC        clean_r_datas
-  C:0AD6H         PUBLIC        tcp_5_setapn
+  C:0B46H         PUBLIC        clean_r_datas
+  C:0003H         PUBLIC        tcp_5_setapn
   D:008DH         PUBLIC        TH1
   C:04F1H         PUBLIC        TC_TCP_GETLINK
   D:008BH         PUBLIC        TL1
   B:0088H.6       PUBLIC        TR1
-  C:0B14H         PUBLIC        tcp_7_getip
+  C:0AF5H         PUBLIC        tcp_7_getip
   C:085FH         PUBLIC        sim800l_set_runmode
   C:04D7H         PUBLIC        TC_TCP_CHECKGPRS
   X:0000H         PUBLIC        r_datas
   X:0190H         PUBLIC        t_datas
   D:0021H         PUBLIC        MAX
   C:0996H         PUBLIC        print_r_datas
-  C:0B33H         PUBLIC        UsartConfiguration
+  C:0B30H         PUBLIC        UsartConfiguration
   C:09CFH         PUBLIC        print_t_datas
   C:095AH         PUBLIC        tcp_4_checkgprs
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 6
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 6
 
 
   C:091EH         PUBLIC        tcp_3_checkreg
   -------         PROC          MAIN
-  C:0003H         LINE#         60
-  C:0003H         LINE#         61
-  C:0003H         LINE#         62
-  C:0006H         LINE#         64
-  C:0009H         LINE#         66
-  C:000CH         LINE#         68
-  C:000FH         LINE#         70
-  C:0012H         LINE#         72
-  C:0015H         LINE#         74
-  C:0018H         LINE#         76
-  C:001BH         LINE#         80
-  C:0020H         LINE#         83
+  C:0B14H         LINE#         60
+  C:0B14H         LINE#         61
+  C:0B14H         LINE#         62
+  C:0B17H         LINE#         64
+  C:0B1AH         LINE#         66
+  C:0B1DH         LINE#         68
+  C:0B20H         LINE#         70
+  C:0B23H         LINE#         72
+  C:0B26H         LINE#         74
+  C:0B29H         LINE#         78
+  C:0B2EH         LINE#         81
   -------         ENDPROC       MAIN
-  C:0B73H         SYMBOL        L?0151
+  C:0B70H         SYMBOL        L?0151
   -------         PROC          L?0150
   -------         ENDPROC       L?0150
-  C:0B73H         SYMBOL        L?0151
+  C:0B70H         SYMBOL        L?0151
   -------         PROC          _SEND_BYTE
   D:0007H         SYMBOL        ch
-  C:0B79H         LINE#         88
+  C:0B76H         LINE#         86
+  C:0B76H         LINE#         87
+  C:0B76H         LINE#         88
   C:0B79H         LINE#         89
-  C:0B79H         LINE#         90
-  C:0B7CH         LINE#         91
-  C:0B7EH         LINE#         92
-  C:0B80H         LINE#         93
+  C:0B7BH         LINE#         90
+  C:0B7DH         LINE#         91
   -------         ENDPROC       _SEND_BYTE
   -------         PROC          PRINT_R_DATAS
   -------         DO            
   D:0023H         SYMBOL        i
   -------         ENDDO         
-  C:0996H         LINE#         97
+  C:0996H         LINE#         95
+  C:0996H         LINE#         96
   C:0996H         LINE#         98
-  C:0996H         LINE#         100
-  C:09B3H         LINE#         101
-  C:09B3H         LINE#         102
-  C:09C4H         LINE#         103
-  C:09CEH         LINE#         104
+  C:09B3H         LINE#         99
+  C:09B3H         LINE#         100
+  C:09C4H         LINE#         101
+  C:09CEH         LINE#         102
   -------         ENDPROC       PRINT_R_DATAS
   -------         PROC          PRINT_T_DATAS
   -------         DO            
   D:0025H         SYMBOL        i
   -------         ENDDO         
-  C:09CFH         LINE#         106
+  C:09CFH         LINE#         104
+  C:09CFH         LINE#         105
   C:09CFH         LINE#         107
-  C:09CFH         LINE#         109
-  C:09ECH         LINE#         110
-  C:09ECH         LINE#         111
-  C:09FDH         LINE#         112
-  C:0A07H         LINE#         113
+  C:09ECH         LINE#         108
+  C:09ECH         LINE#         109
+  C:09FDH         LINE#         110
+  C:0A07H         LINE#         111
   -------         ENDPROC       PRINT_T_DATAS
   -------         PROC          CLEAN_R_DATAS
-  C:0B49H         LINE#         115
-  C:0B49H         LINE#         116
-  C:0B49H         LINE#         117
-  C:0B58H         LINE#         118
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 7
+  C:0B46H         LINE#         113
+  C:0B46H         LINE#         114
+  C:0B46H         LINE#         115
+  C:0B55H         LINE#         116
+  C:0B5AH         LINE#         117
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 7
 
 
-  C:0B5DH         LINE#         119
   -------         ENDPROC       CLEAN_R_DATAS
   -------         PROC          SIM800L_CONNECT
   -------         DO            
   D:0004H         SYMBOL        i
   D:0008H         SYMBOL        p
   -------         ENDDO         
-  C:0818H         LINE#         122
-  C:0818H         LINE#         123
+  C:0818H         LINE#         120
+  C:0818H         LINE#         121
+  C:0818H         LINE#         125
+  C:0818H         LINE#         126
   C:0818H         LINE#         127
-  C:0818H         LINE#         128
-  C:0818H         LINE#         129
-  C:081BH         LINE#         130
-  C:081BH         LINE#         131
-  C:0825H         LINE#         132
-  C:0830H         LINE#         133
-  C:0835H         LINE#         134
-  C:083AH         LINE#         135
-  C:0841H         LINE#         137
-  C:0859H         LINE#         138
-  C:085EH         LINE#         139
-  C:085EH         LINE#         140
+  C:081BH         LINE#         128
+  C:081BH         LINE#         129
+  C:0825H         LINE#         130
+  C:0830H         LINE#         131
+  C:0835H         LINE#         132
+  C:083AH         LINE#         133
+  C:0841H         LINE#         135
+  C:0859H         LINE#         136
+  C:085EH         LINE#         137
+  C:085EH         LINE#         138
   -------         ENDPROC       SIM800L_CONNECT
   -------         PROC          SIM800L_SET_RUNMODE
   -------         DO            
   D:0004H         SYMBOL        i
   D:0008H         SYMBOL        p
   -------         ENDDO         
-  C:085FH         LINE#         146
-  C:085FH         LINE#         147
+  C:085FH         LINE#         144
+  C:085FH         LINE#         145
+  C:085FH         LINE#         149
+  C:085FH         LINE#         150
   C:085FH         LINE#         151
-  C:085FH         LINE#         152
-  C:085FH         LINE#         153
-  C:0862H         LINE#         154
-  C:0862H         LINE#         155
-  C:086CH         LINE#         156
-  C:0877H         LINE#         157
-  C:087CH         LINE#         158
-  C:0881H         LINE#         159
-  C:0888H         LINE#         161
-  C:08A0H         LINE#         162
-  C:08A5H         LINE#         163
-  C:08A5H         LINE#         164
+  C:0862H         LINE#         152
+  C:0862H         LINE#         153
+  C:086CH         LINE#         154
+  C:0877H         LINE#         155
+  C:087CH         LINE#         156
+  C:0881H         LINE#         157
+  C:0888H         LINE#         159
+  C:08A0H         LINE#         160
+  C:08A5H         LINE#         161
+  C:08A5H         LINE#         162
   -------         ENDPROC       SIM800L_SET_RUNMODE
   -------         PROC          SIM800L_WAIT_SMS
   -------         DO            
   D:0008H         SYMBOL        p
   -------         ENDDO         
-  C:0717H         LINE#         171
+  C:0717H         LINE#         169
+  C:0717H         LINE#         170
   C:0717H         LINE#         172
-  C:0717H         LINE#         174
+  C:0717H         LINE#         173
   C:0717H         LINE#         175
-  C:0717H         LINE#         177
-  C:071AH         LINE#         179
-  C:071FH         LINE#         180
-  C:0724H         LINE#         181
-  C:0729H         LINE#         182
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 8
+  C:071AH         LINE#         177
+  C:071FH         LINE#         178
+  C:0724H         LINE#         179
+  C:0729H         LINE#         180
+  C:072EH         LINE#         181
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 8
 
 
-  C:072EH         LINE#         183
-  C:0733H         LINE#         184
-  C:0738H         LINE#         185
-  C:073DH         LINE#         189
-  C:0755H         LINE#         190
-  C:075AH         LINE#         191
-  C:075AH         LINE#         192
-  C:075DH         LINE#         198
-  C:076CH         LINE#         201
-  C:076FH         LINE#         204
-  C:0772H         LINE#         206
-  C:0775H         LINE#         209
-  C:0775H         LINE#         210
-  C:0778H         LINE#         211
+  C:0733H         LINE#         182
+  C:0738H         LINE#         183
+  C:073DH         LINE#         187
+  C:0755H         LINE#         188
+  C:075AH         LINE#         189
+  C:075AH         LINE#         190
+  C:075DH         LINE#         196
+  C:076CH         LINE#         199
+  C:076FH         LINE#         202
+  C:0772H         LINE#         204
+  C:0775H         LINE#         207
+  C:0775H         LINE#         208
+  C:0778H         LINE#         209
   -------         ENDPROC       SIM800L_WAIT_SMS
   -------         PROC          TCP
+  C:0A08H         LINE#         213
+  C:0A08H         LINE#         214
   C:0A08H         LINE#         215
-  C:0A08H         LINE#         216
-  C:0A08H         LINE#         217
-  C:0A0BH         LINE#         218
-  C:0A0EH         LINE#         220
-  C:0A11H         LINE#         221
-  C:0A14H         LINE#         222
-  C:0A17H         LINE#         223
-  C:0A1AH         LINE#         225
-  C:0A1DH         LINE#         226
-  C:0A20H         LINE#         228
-  C:0A23H         LINE#         229
-  C:0A26H         LINE#         231
-  C:0A29H         LINE#         232
-  C:0A2CH         LINE#         234
-  C:0A2FH         LINE#         235
-  C:0A32H         LINE#         237
-  C:0A35H         LINE#         240
-  C:0A38H         LINE#         243
-  C:0A3BH         LINE#         246
-  C:0A3EH         LINE#         247
+  C:0A0BH         LINE#         216
+  C:0A0EH         LINE#         218
+  C:0A11H         LINE#         219
+  C:0A14H         LINE#         220
+  C:0A17H         LINE#         221
+  C:0A1AH         LINE#         223
+  C:0A1DH         LINE#         224
+  C:0A20H         LINE#         226
+  C:0A23H         LINE#         227
+  C:0A26H         LINE#         229
+  C:0A29H         LINE#         230
+  C:0A2CH         LINE#         232
+  C:0A2FH         LINE#         233
+  C:0A32H         LINE#         235
+  C:0A35H         LINE#         238
+  C:0A38H         LINE#         241
+  C:0A3BH         LINE#         244
+  C:0A3EH         LINE#         245
   -------         ENDPROC       TCP
   -------         PROC          TCP_1_CHECKSIM
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:08A6H         LINE#         251
-  C:08A6H         LINE#         252
+  C:08A6H         LINE#         249
+  C:08A6H         LINE#         250
+  C:08A6H         LINE#         254
+  C:08A6H         LINE#         255
   C:08A6H         LINE#         256
-  C:08A6H         LINE#         257
-  C:08A6H         LINE#         258
-  C:08A9H         LINE#         259
-  C:08A9H         LINE#         260
-  C:08B3H         LINE#         261
+  C:08A9H         LINE#         257
+  C:08A9H         LINE#         258
+  C:08B3H         LINE#         259
+  C:08BEH         LINE#         260
+  C:08BEH         LINE#         261
   C:08BEH         LINE#         262
-  C:08BEH         LINE#         263
-  C:08BEH         LINE#         264
-  C:08C1H         LINE#         270
-  C:08D9H         LINE#         271
-  C:08DEH         LINE#         272
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 9
+  C:08C1H         LINE#         268
+  C:08D9H         LINE#         269
+  C:08DEH         LINE#         270
+  C:08DEH         LINE#         271
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 9
 
 
-  C:08DEH         LINE#         273
+  C:08E1H         LINE#         273
+  C:08E1H         LINE#         274
   C:08E1H         LINE#         275
-  C:08E1H         LINE#         276
   C:08E1H         LINE#         277
-  C:08E1H         LINE#         279
   -------         ENDPROC       TCP_1_CHECKSIM
   -------         PROC          TCP_2_CHECKNET
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:08E2H         LINE#         281
-  C:08E2H         LINE#         282
+  C:08E2H         LINE#         279
+  C:08E2H         LINE#         280
+  C:08E2H         LINE#         284
+  C:08E2H         LINE#         285
   C:08E2H         LINE#         286
-  C:08E2H         LINE#         287
-  C:08E2H         LINE#         288
-  C:08E5H         LINE#         289
-  C:08E5H         LINE#         290
-  C:08EFH         LINE#         291
+  C:08E5H         LINE#         287
+  C:08E5H         LINE#         288
+  C:08EFH         LINE#         289
+  C:08FAH         LINE#         290
+  C:08FAH         LINE#         291
   C:08FAH         LINE#         292
-  C:08FAH         LINE#         293
-  C:08FAH         LINE#         294
-  C:08FDH         LINE#         300
-  C:0915H         LINE#         301
-  C:091AH         LINE#         302
-  C:091AH         LINE#         303
+  C:08FDH         LINE#         298
+  C:0915H         LINE#         299
+  C:091AH         LINE#         300
+  C:091AH         LINE#         301
+  C:091DH         LINE#         303
+  C:091DH         LINE#         304
   C:091DH         LINE#         305
-  C:091DH         LINE#         306
   C:091DH         LINE#         307
-  C:091DH         LINE#         309
   -------         ENDPROC       TCP_2_CHECKNET
   -------         PROC          TCP_3_CHECKREG
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:091EH         LINE#         311
-  C:091EH         LINE#         312
+  C:091EH         LINE#         309
+  C:091EH         LINE#         310
+  C:091EH         LINE#         314
+  C:091EH         LINE#         315
   C:091EH         LINE#         316
-  C:091EH         LINE#         317
-  C:091EH         LINE#         318
-  C:0921H         LINE#         319
-  C:0921H         LINE#         320
-  C:092BH         LINE#         321
+  C:0921H         LINE#         317
+  C:0921H         LINE#         318
+  C:092BH         LINE#         319
+  C:0936H         LINE#         320
+  C:0936H         LINE#         321
   C:0936H         LINE#         322
-  C:0936H         LINE#         323
-  C:0936H         LINE#         324
-  C:0939H         LINE#         330
-  C:0951H         LINE#         331
-  C:0956H         LINE#         332
-  C:0956H         LINE#         333
+  C:0939H         LINE#         328
+  C:0951H         LINE#         329
+  C:0956H         LINE#         330
+  C:0956H         LINE#         331
+  C:0959H         LINE#         333
+  C:0959H         LINE#         334
   C:0959H         LINE#         335
-  C:0959H         LINE#         336
   C:0959H         LINE#         337
-  C:0959H         LINE#         339
   -------         ENDPROC       TCP_3_CHECKREG
   -------         PROC          TCP_4_CHECKGPRS
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 10
-
-
   -------         DO            
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 10
+
+
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:095AH         LINE#         341
-  C:095AH         LINE#         342
+  C:095AH         LINE#         339
+  C:095AH         LINE#         340
+  C:095AH         LINE#         344
+  C:095AH         LINE#         345
   C:095AH         LINE#         346
-  C:095AH         LINE#         347
-  C:095AH         LINE#         348
-  C:095DH         LINE#         349
-  C:095DH         LINE#         350
-  C:0967H         LINE#         351
+  C:095DH         LINE#         347
+  C:095DH         LINE#         348
+  C:0967H         LINE#         349
+  C:0972H         LINE#         350
+  C:0972H         LINE#         351
   C:0972H         LINE#         352
-  C:0972H         LINE#         353
-  C:0972H         LINE#         354
-  C:0975H         LINE#         360
-  C:098DH         LINE#         361
-  C:0992H         LINE#         362
-  C:0992H         LINE#         363
+  C:0975H         LINE#         358
+  C:098DH         LINE#         359
+  C:0992H         LINE#         360
+  C:0992H         LINE#         361
+  C:0995H         LINE#         363
+  C:0995H         LINE#         364
   C:0995H         LINE#         365
-  C:0995H         LINE#         366
   C:0995H         LINE#         367
-  C:0995H         LINE#         369
   -------         ENDPROC       TCP_4_CHECKGPRS
   -------         PROC          TCP_5_SETAPN
   -------         DO            
   D:0004H         SYMBOL        i
   -------         ENDDO         
-  C:0AD6H         LINE#         371
-  C:0AD6H         LINE#         372
-  C:0AD6H         LINE#         378
-  C:0AD9H         LINE#         379
-  C:0AD9H         LINE#         380
-  C:0AE3H         LINE#         381
-  C:0AEEH         LINE#         382
-  C:0AEEH         LINE#         383
-  C:0AEEH         LINE#         384
-  C:0AF1H         LINE#         386
-  C:0AF4H         LINE#         398
+  C:0003H         LINE#         369
+  C:0003H         LINE#         370
+  C:0003H         LINE#         376
+  C:0006H         LINE#         377
+  C:0006H         LINE#         378
+  C:0010H         LINE#         379
+  C:001BH         LINE#         380
+  C:001BH         LINE#         381
+  C:001BH         LINE#         382
+  C:001EH         LINE#         384
+  C:0021H         LINE#         396
   -------         ENDPROC       TCP_5_SETAPN
   -------         PROC          TCP_6_GETLINK
   -------         DO            
   D:0004H         SYMBOL        i
   -------         ENDDO         
-  C:0AF5H         LINE#         400
-  C:0AF5H         LINE#         401
-  C:0AF5H         LINE#         407
-  C:0AF8H         LINE#         408
-  C:0AF8H         LINE#         409
-  C:0B02H         LINE#         410
-  C:0B0DH         LINE#         411
-  C:0B0DH         LINE#         412
-  C:0B0DH         LINE#         413
-  C:0B10H         LINE#         415
-  C:0B13H         LINE#         427
+  C:0AD6H         LINE#         398
+  C:0AD6H         LINE#         399
+  C:0AD6H         LINE#         405
+  C:0AD9H         LINE#         406
+  C:0AD9H         LINE#         407
+  C:0AE3H         LINE#         408
+  C:0AEEH         LINE#         409
+  C:0AEEH         LINE#         410
+  C:0AEEH         LINE#         411
+  C:0AF1H         LINE#         413
+  C:0AF4H         LINE#         425
   -------         ENDPROC       TCP_6_GETLINK
   -------         PROC          TCP_7_GETIP
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 11
-
-
   -------         DO            
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 11
+
+
   D:0004H         SYMBOL        i
   -------         ENDDO         
-  C:0B14H         LINE#         429
-  C:0B14H         LINE#         430
-  C:0B14H         LINE#         436
-  C:0B17H         LINE#         437
-  C:0B17H         LINE#         438
-  C:0B21H         LINE#         439
-  C:0B2CH         LINE#         440
-  C:0B2CH         LINE#         441
-  C:0B2CH         LINE#         442
-  C:0B2FH         LINE#         445
-  C:0B32H         LINE#         457
+  C:0AF5H         LINE#         427
+  C:0AF5H         LINE#         428
+  C:0AF5H         LINE#         434
+  C:0AF8H         LINE#         435
+  C:0AF8H         LINE#         436
+  C:0B02H         LINE#         437
+  C:0B0DH         LINE#         438
+  C:0B0DH         LINE#         439
+  C:0B0DH         LINE#         440
+  C:0B10H         LINE#         443
+  C:0B13H         LINE#         455
   -------         ENDPROC       TCP_7_GETIP
   -------         PROC          TCP_8_TOSERVER
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:07D0H         LINE#         459
-  C:07D0H         LINE#         460
+  C:07D0H         LINE#         457
+  C:07D0H         LINE#         458
+  C:07D0H         LINE#         462
+  C:07D0H         LINE#         463
   C:07D0H         LINE#         464
-  C:07D0H         LINE#         465
-  C:07D0H         LINE#         466
-  C:07D3H         LINE#         467
-  C:07D3H         LINE#         468
-  C:07DDH         LINE#         469
-  C:07E8H         LINE#         470
-  C:07EDH         LINE#         471
-  C:07F2H         LINE#         472
-  C:07F7H         LINE#         474
-  C:07FAH         LINE#         489
-  C:0812H         LINE#         490
-  C:0817H         LINE#         491
-  C:0817H         LINE#         492
+  C:07D3H         LINE#         465
+  C:07D3H         LINE#         466
+  C:07DDH         LINE#         467
+  C:07E8H         LINE#         468
+  C:07EDH         LINE#         469
+  C:07F2H         LINE#         470
+  C:07F7H         LINE#         472
+  C:07FAH         LINE#         487
+  C:0812H         LINE#         488
+  C:0817H         LINE#         489
+  C:0817H         LINE#         490
   -------         ENDPROC       TCP_8_TOSERVER
   -------         PROC          TCP_9_SENDTEXT
   -------         DO            
@@ -646,121 +645,121 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   D:000EH         SYMBOL        g
   D:0011H         SYMBOL        j
   -------         ENDDO         
-  C:054EH         LINE#         498
-  C:054EH         LINE#         499
+  C:054EH         LINE#         496
+  C:054EH         LINE#         497
+  C:054EH         LINE#         503
+  C:054EH         LINE#         504
   C:054EH         LINE#         505
-  C:054EH         LINE#         506
-  C:054EH         LINE#         507
-  C:0551H         LINE#         508
-  C:0551H         LINE#         509
-  C:055BH         LINE#         510
+  C:0551H         LINE#         506
+  C:0551H         LINE#         507
+  C:055BH         LINE#         508
+  C:0566H         LINE#         509
+  C:0566H         LINE#         510
   C:0566H         LINE#         511
-  C:0566H         LINE#         512
-  C:0566H         LINE#         513
-  C:0569H         LINE#         515
-  C:056CH         LINE#         528
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 12
+  C:0569H         LINE#         513
+  C:056CH         LINE#         526
+  C:0584H         LINE#         527
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 12
 
 
-  C:0584H         LINE#         529
+  C:0589H         LINE#         528
+  C:0589H         LINE#         529
   C:0589H         LINE#         530
-  C:0589H         LINE#         531
-  C:0589H         LINE#         532
+  C:0589H         LINE#         533
+  C:0589H         LINE#         534
   C:0589H         LINE#         535
-  C:0589H         LINE#         536
-  C:0589H         LINE#         537
-  C:05A7H         LINE#         538
-  C:05A7H         LINE#         539
-  C:05B8H         LINE#         540
-  C:05C2H         LINE#         541
-  C:05C7H         LINE#         542
-  C:05CCH         LINE#         543
-  C:05D1H         LINE#         547
-  C:05D6H         LINE#         548
-  C:05D9H         LINE#         551
-  C:05F1H         LINE#         552
-  C:05F6H         LINE#         553
-  C:05F6H         LINE#         554
-  C:05F9H         LINE#         557
+  C:05A7H         LINE#         536
+  C:05A7H         LINE#         537
+  C:05B8H         LINE#         538
+  C:05C2H         LINE#         539
+  C:05C7H         LINE#         540
+  C:05CCH         LINE#         541
+  C:05D1H         LINE#         545
+  C:05D6H         LINE#         546
+  C:05D9H         LINE#         549
+  C:05F1H         LINE#         550
+  C:05F6H         LINE#         551
+  C:05F6H         LINE#         552
+  C:05F9H         LINE#         555
+  C:0608H         LINE#         556
+  C:0608H         LINE#         557
   C:0608H         LINE#         558
   C:0608H         LINE#         559
-  C:0608H         LINE#         560
-  C:0608H         LINE#         561
   -------         ENDPROC       TCP_9_SENDTEXT
   -------         PROC          TCP_10_CLOSE
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:0A41H         LINE#         563
-  C:0A41H         LINE#         564
-  C:0A41H         LINE#         570
-  C:0A44H         LINE#         571
-  C:0A44H         LINE#         572
-  C:0A4EH         LINE#         573
+  C:0A41H         LINE#         561
+  C:0A41H         LINE#         562
+  C:0A41H         LINE#         568
+  C:0A44H         LINE#         569
+  C:0A44H         LINE#         570
+  C:0A4EH         LINE#         571
+  C:0A59H         LINE#         572
+  C:0A59H         LINE#         573
   C:0A59H         LINE#         574
-  C:0A59H         LINE#         575
-  C:0A59H         LINE#         576
-  C:0A5CH         LINE#         578
-  C:0A5FH         LINE#         581
-  C:0A77H         LINE#         582
+  C:0A5CH         LINE#         576
+  C:0A5FH         LINE#         579
+  C:0A77H         LINE#         580
+  C:0A77H         LINE#         581
   C:0A77H         LINE#         583
-  C:0A77H         LINE#         585
-  C:0A77H         LINE#         588
+  C:0A77H         LINE#         586
   -------         ENDPROC       TCP_10_CLOSE
   -------         PROC          TCP_11_SHUT
   -------         DO            
   D:0004H         SYMBOL        i
   D:000BH         SYMBOL        p
   -------         ENDDO         
-  C:0A78H         LINE#         590
-  C:0A78H         LINE#         591
-  C:0A78H         LINE#         595
-  C:0A7BH         LINE#         596
-  C:0A7BH         LINE#         597
-  C:0A85H         LINE#         598
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 13
+  C:0A78H         LINE#         588
+  C:0A78H         LINE#         589
+  C:0A78H         LINE#         593
+  C:0A7BH         LINE#         594
+  C:0A7BH         LINE#         595
+  C:0A85H         LINE#         596
+  C:0A90H         LINE#         597
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 13
 
 
+  C:0A90H         LINE#         598
   C:0A90H         LINE#         599
-  C:0A90H         LINE#         600
-  C:0A90H         LINE#         601
-  C:0A93H         LINE#         603
-  C:0AABH         LINE#         605
+  C:0A93H         LINE#         601
+  C:0AABH         LINE#         603
+  C:0AABH         LINE#         604
   C:0AABH         LINE#         606
   C:0AABH         LINE#         608
-  C:0AABH         LINE#         610
-  C:0AAEH         LINE#         612
+  C:0AAEH         LINE#         610
   -------         ENDPROC       TCP_11_SHUT
   -------         PROC          SERIAL
-  C:077AH         LINE#         617
-  C:0787H         LINE#         619
-  C:078AH         LINE#         620
-  C:078AH         LINE#         621
-  C:078CH         LINE#         623
-  C:07A3H         LINE#         624
-  C:07AEH         LINE#         625
-  C:07AEH         LINE#         626
-  C:07B4H         LINE#         627
-  C:07B4H         LINE#         628
-  C:07BFH         LINE#         629
-  C:07BFH         LINE#         630
+  C:077AH         LINE#         615
+  C:0787H         LINE#         617
+  C:078AH         LINE#         618
+  C:078AH         LINE#         619
+  C:078CH         LINE#         621
+  C:07A3H         LINE#         622
+  C:07AEH         LINE#         623
+  C:07AEH         LINE#         624
+  C:07B4H         LINE#         625
+  C:07B4H         LINE#         626
+  C:07BFH         LINE#         627
+  C:07BFH         LINE#         628
+  C:07C5H         LINE#         629
   C:07C5H         LINE#         631
-  C:07C5H         LINE#         633
-  C:07C5H         LINE#         634
+  C:07C5H         LINE#         632
   -------         ENDPROC       SERIAL
   -------         PROC          USARTCONFIGURATION
-  C:0B33H         LINE#         638
+  C:0B30H         LINE#         636
+  C:0B30H         LINE#         637
+  C:0B30H         LINE#         638
   C:0B33H         LINE#         639
-  C:0B33H         LINE#         640
-  C:0B36H         LINE#         641
-  C:0B39H         LINE#         642
-  C:0B3CH         LINE#         643
-  C:0B3FH         LINE#         644
-  C:0B42H         LINE#         645
-  C:0B44H         LINE#         646
-  C:0B46H         LINE#         647
-  C:0B48H         LINE#         648
+  C:0B36H         LINE#         640
+  C:0B39H         LINE#         644
+  C:0B3CH         LINE#         646
+  C:0B3FH         LINE#         648
+  C:0B41H         LINE#         649
+  C:0B43H         LINE#         650
+  C:0B45H         LINE#         651
   -------         ENDPROC       USARTCONFIGURATION
   C:0AAFH         SYMBOL        L?0149
   -------         PROC          L?0148
@@ -772,19 +771,19 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   D:0004H         SYMBOL        a
   D:0005H         SYMBOL        b
   -------         ENDDO         
-  C:0ABDH         LINE#         651
-  C:0ABDH         LINE#         652
-  C:0ABDH         LINE#         656
-  C:0AC6H         LINE#         657
-  C:0AC6H         LINE#         658
-  C:0AC8H         LINE#         659
-  C:0AC8H         LINE#         660
-BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  16:16:10  PAGE 14
+  C:0ABDH         LINE#         654
+  C:0ABDH         LINE#         655
+  C:0ABDH         LINE#         659
+  C:0AC6H         LINE#         660
+  C:0AC6H         LINE#         661
+  C:0AC8H         LINE#         662
+  C:0AC8H         LINE#         663
+  C:0ACCH         LINE#         664
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/01/2019  23:40:57  PAGE 14
 
 
-  C:0ACCH         LINE#         661
-  C:0ACEH         LINE#         662
-  C:0AD5H         LINE#         663
+  C:0ACEH         LINE#         665
+  C:0AD5H         LINE#         666
   -------         ENDPROC       _DELAY10MS
   -------         ENDMOD        SIM800L
 
@@ -793,7 +792,7 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
   -------         ENDMOD        ?C?STRCPY
 
   -------         MODULE        STRLEN
-  C:0B5EH         PUBLIC        _STRLEN
+  C:0B5BH         PUBLIC        _STRLEN
   -------         ENDMOD        STRLEN
 
   -------         MODULE        STRSTR
@@ -815,5 +814,5 @@ SYMBOL TABLE OF MODULE:  sim800l (?C_STARTUP)
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     SEGMENT: ?PR?PRINT_T_DATAS?SIM800L
 
-Program Size: data=40.0 xdata=800 code=2944
+Program Size: data=40.0 xdata=800 code=2941
 LINK/LOCATE RUN COMPLETE.  2 WARNING(S),  0 ERROR(S)

@@ -21,8 +21,8 @@ unsigned char code TC_TCP_SHUT[] = "AT+CIPSHUT";			// 关闭GPRS通信
 
 unsigned char xdata r_datas[LENGTH] = {0};	 					// 缓存MCU传入的数据
 unsigned char xdata t_datas[LENGTH] = {0};	 					// 传到TCP服务器的数据
-unsigned int MAX=0;
-unsigned int index=0;								// 缓存数组索引
+unsigned int data MAX=0;
+unsigned int data index=0;								// 缓存数组索引
 
 //--声明全局函数--//
 void UsartConfiguration();				// 串口参数配
@@ -62,8 +62,6 @@ void main()
 	UsartConfiguration();
 
 	P0 = 0x01;	 // 0000 0001
-
-	SBUF = 's';
 
 	sim800l_connect();
 
@@ -544,7 +542,7 @@ void tcp_9_sendtext()
 		
 //		Delay10ms(10);		// 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明	
 	   	
-		send_byte(0x3e);	// '>'
+		send_byte(0x3c);	// '<'
 		P0 = 0xc0;	 // 1100 0000
 
 	
@@ -637,11 +635,11 @@ void serial() interrupt 4
 
 void UsartConfiguration()
 {
-	SCON=0X50;			//设置为工作方式1
+	SCON=0X52;			//设置为工作方式1
 	TMOD=0X20;			//设置计数器工作方式2
-	PCON=0X80;			//波特率加倍
-	TH1=0XF3;		    //计数器初始值设置，注意波特率是4800的
-	TL1=0XF3;
+	PCON=0X80;
+	TH1=0XFD;		    //计数器初始值设置，波特率设置为19200
+	TL1=0XFD;		   	//晶振从12MHz更换为11.0592MHz
 	ES=1;						//打开接收中断
 	EA=1;						//打开总中断
 	TR1=1;					    //打开计数器

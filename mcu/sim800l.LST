@@ -1,4 +1,4 @@
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 1   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 1   
 
 
 C51 COMPILER V9.01, COMPILATION OF MODULE SIM800L
@@ -30,8 +30,8 @@ line level    source
   21          
   22          unsigned char xdata r_datas[LENGTH] = {0};                                              // 缓存MCU传入的数据
   23          unsigned char xdata t_datas[LENGTH] = {0};                                              // 传到TCP服务器的数据
-  24          unsigned int MAX=0;
-  25          unsigned int index=0;                                                           // 缓存数组索引
+  24          unsigned int data MAX=0;
+  25          unsigned int data index=0;                                                              // 缓存数组索引
   26          
   27          //--声明全局函数--//
   28          void UsartConfiguration();                              // 串口参数配
@@ -62,7 +62,7 @@ line level    source
   53          /*******************************************************************************
   54          * 函 数 名         : main
   55          * 函数功能                 : 主函数
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 2   
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 2   
 
   56          * 输    入         : 无
   57          * 输    出         : 无
@@ -74,631 +74,636 @@ line level    source
   63   1      
   64   1              P0 = 0x01;       // 0000 0001
   65   1      
-  66   1              SBUF = 's';
+  66   1              sim800l_connect();
   67   1      
-  68   1              sim800l_connect();
+  68   1              clean_r_datas();
   69   1      
-  70   1              clean_r_datas();
+  70   1              sim800l_set_runmode();
   71   1      
-  72   1              sim800l_set_runmode();
+  72   1              clean_r_datas();
   73   1      
-  74   1              clean_r_datas();
+  74   1              sim800l_wait_sms();
   75   1      
-  76   1              sim800l_wait_sms();
+  76   1      
   77   1      
-  78   1      
+  78   1              send_byte('e');
   79   1      
-  80   1              send_byte('e');
-  81   1      
-  82   1      
-  83   1              while(1);               // 调试用，防止死循环看不出代码差异
-  84   1              
-  85   1      }
-  86          
-  87          
-  88          void send_byte(unsigned char ch)
-  89          {
-  90   1              while(TI!=1);
-  91   1              TI = 0;
-  92   1              SBUF = ch;
-  93   1      }
+  80   1      
+  81   1              while(1);               // 调试用，防止死循环看不出代码差异
+  82   1              
+  83   1      }
+  84          
+  85          
+  86          void send_byte(unsigned char ch)
+  87          {
+  88   1              while(TI!=1);
+  89   1              TI = 0;
+  90   1              SBUF = ch;
+  91   1      }
+  92          
+  93          
   94          
-  95          
-  96          
-  97          void print_r_datas()
-  98          {
-  99   1              int i;
- 100   1              for(i = 0; i < strlen(r_datas); i++)
- 101   1              {
- 102   2                      send_byte(r_datas[i]);  
- 103   2              }
- 104   1      }
- 105          
- 106          void print_t_datas()
- 107          {
- 108   1              int i;
- 109   1              for(i = 0; i < strlen(t_datas); i++)
- 110   1              {
- 111   2                      send_byte(t_datas[i]);  
- 112   2              }
- 113   1      }
- 114          
- 115          void clean_r_datas()
- 116          {
- 117   1              memset(r_datas,0,sizeof(r_datas));
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 3   
+  95          void print_r_datas()
+  96          {
+  97   1              int i;
+  98   1              for(i = 0; i < strlen(r_datas); i++)
+  99   1              {
+ 100   2                      send_byte(r_datas[i]);  
+ 101   2              }
+ 102   1      }
+ 103          
+ 104          void print_t_datas()
+ 105          {
+ 106   1              int i;
+ 107   1              for(i = 0; i < strlen(t_datas); i++)
+ 108   1              {
+ 109   2                      send_byte(t_datas[i]);  
+ 110   2              }
+ 111   1      }
+ 112          
+ 113          void clean_r_datas()
+ 114          {
+ 115   1              memset(r_datas,0,sizeof(r_datas));
+ 116   1              index = 0;
+ 117   1      }
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 3   
 
- 118   1              index = 0;
- 119   1      }
- 120          
- 121          
- 122          void sim800l_connect()
- 123          {
- 124   1              int i;
- 125   1              unsigned char *p;
- 126   1      
- 127   1              while(1)
- 128   1              {
- 129   2                      for(i = 0; i < sizeof(TC_CONNECT)-1; i++)
- 130   2                      {
- 131   3                              send_byte(TC_CONNECT[i]);       
- 132   3                      }
- 133   2                      send_byte(0x0d);
- 134   2                      send_byte(0x0a);
- 135   2                      Delay10ms(1);
- 136   2      
- 137   2                      p = strstr(r_datas,"OK");
- 138   2                      if(p != NULL)
- 139   2                      {
- 140   3                              break;
- 141   3                      }
- 142   2              }
- 143   1      }
- 144          
- 145          
- 146          void sim800l_set_runmode()
- 147          {
- 148   1              int i;
- 149   1              unsigned char *p;
- 150   1      
- 151   1              while(1)
- 152   1              {
- 153   2                      for(i = 0; i < sizeof(TC_RUNMODE)-1; i++)
- 154   2                      {
- 155   3                              send_byte(TC_RUNMODE[i]);
- 156   3                      }
- 157   2                      send_byte(0x0d);
- 158   2                      send_byte(0x0a);
- 159   2                      Delay10ms(1);
- 160   2      
- 161   2                      p = strstr(r_datas,"OK");
- 162   2                      if(p != NULL)
- 163   2                      {
- 164   3                              break;
- 165   3      
- 166   3                      }
- 167   2              }
- 168   1      }
- 169          
- 170          
- 171          void sim800l_wait_sms()
- 172          {
- 173   1              char *p;
- 174   1              while(1)
- 175   1              {
- 176   2                      // do sms;
- 177   2                      P0 = 0x02;       // 0000 0010
- 178   2      
- 179   2                      send_byte(0x57);                // W
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 4   
+ 118          
+ 119          
+ 120          void sim800l_connect()
+ 121          {
+ 122   1              int i;
+ 123   1              unsigned char *p;
+ 124   1      
+ 125   1              while(1)
+ 126   1              {
+ 127   2                      for(i = 0; i < sizeof(TC_CONNECT)-1; i++)
+ 128   2                      {
+ 129   3                              send_byte(TC_CONNECT[i]);       
+ 130   3                      }
+ 131   2                      send_byte(0x0d);
+ 132   2                      send_byte(0x0a);
+ 133   2                      Delay10ms(1);
+ 134   2      
+ 135   2                      p = strstr(r_datas,"OK");
+ 136   2                      if(p != NULL)
+ 137   2                      {
+ 138   3                              break;
+ 139   3                      }
+ 140   2              }
+ 141   1      }
+ 142          
+ 143          
+ 144          void sim800l_set_runmode()
+ 145          {
+ 146   1              int i;
+ 147   1              unsigned char *p;
+ 148   1      
+ 149   1              while(1)
+ 150   1              {
+ 151   2                      for(i = 0; i < sizeof(TC_RUNMODE)-1; i++)
+ 152   2                      {
+ 153   3                              send_byte(TC_RUNMODE[i]);
+ 154   3                      }
+ 155   2                      send_byte(0x0d);
+ 156   2                      send_byte(0x0a);
+ 157   2                      Delay10ms(1);
+ 158   2      
+ 159   2                      p = strstr(r_datas,"OK");
+ 160   2                      if(p != NULL)
+ 161   2                      {
+ 162   3                              break;
+ 163   3      
+ 164   3                      }
+ 165   2              }
+ 166   1      }
+ 167          
+ 168          
+ 169          void sim800l_wait_sms()
+ 170          {
+ 171   1              char *p;
+ 172   1              while(1)
+ 173   1              {
+ 174   2                      // do sms;
+ 175   2                      P0 = 0x02;       // 0000 0010
+ 176   2      
+ 177   2                      send_byte(0x57);                // W
+ 178   2                      send_byte(0x41);                // A
+ 179   2                      send_byte(0x49);                // I
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 4   
 
- 180   2                      send_byte(0x41);                // A
- 181   2                      send_byte(0x49);                // I
- 182   2                      send_byte(0x54);                // T
- 183   2                      send_byte(0x0d);
- 184   2                      send_byte(0x0a);
- 185   2                      Delay10ms(10);
- 186   2                      
- 187   2                      // 这个延迟时间必须足够，不然串口收到的数据（短信）不完整
- 188   2                      // 给串口中断足够的时间去接收数据放入数组
- 189   2                      p = strstr(r_datas,"CMT");
- 190   2                      if(p != NULL)
- 191   2                      {
- 192   3                              P0 = 0xa5;       // 1010 0101
- 193   3      //                      send_byte(0x53);   // S
- 194   3      //                      print_r_datas();
- 195   3      //                      send_byte(0x53);
- 196   3      
- 197   3                              // 将收到的数据缓存
- 198   3                              strcpy(t_datas,r_datas);
- 199   3      
- 200   3                              // 清空接收缓存数组
- 201   3                              clean_r_datas();
- 202   3      
- 203   3                              // 短信发送到TCP服务器
- 204   3                              tcp();
+ 180   2                      send_byte(0x54);                // T
+ 181   2                      send_byte(0x0d);
+ 182   2                      send_byte(0x0a);
+ 183   2                      Delay10ms(10);
+ 184   2                      
+ 185   2                      // 这个延迟时间必须足够，不然串口收到的数据（短信）不完整
+ 186   2                      // 给串口中断足够的时间去接收数据放入数组
+ 187   2                      p = strstr(r_datas,"CMT");
+ 188   2                      if(p != NULL)
+ 189   2                      {
+ 190   3                              P0 = 0xa5;       // 1010 0101
+ 191   3      //                      send_byte(0x53);   // S
+ 192   3      //                      print_r_datas();
+ 193   3      //                      send_byte(0x53);
+ 194   3      
+ 195   3                              // 将收到的数据缓存
+ 196   3                              strcpy(t_datas,r_datas);
+ 197   3      
+ 198   3                              // 清空接收缓存数组
+ 199   3                              clean_r_datas();
+ 200   3      
+ 201   3                              // 短信发送到TCP服务器
+ 202   3                              tcp();
+ 203   3      
+ 204   3                              P0 = 0x0f;       // 0000 1111
  205   3      
- 206   3                              P0 = 0x0f;       // 0000 1111
- 207   3      
- 208   3      
- 209   3                      }
- 210   2                      clean_r_datas();
- 211   2              }
- 212   1      
- 213   1      }
- 214          
- 215          void tcp()
- 216          {
- 217   1              tcp_1_checksim();
- 218   1              clean_r_datas();
- 219   1      
- 220   1              tcp_2_checknet();
+ 206   3      
+ 207   3                      }
+ 208   2                      clean_r_datas();
+ 209   2              }
+ 210   1      
+ 211   1      }
+ 212          
+ 213          void tcp()
+ 214          {
+ 215   1              tcp_1_checksim();
+ 216   1              clean_r_datas();
+ 217   1      
+ 218   1              tcp_2_checknet();
+ 219   1              clean_r_datas();
+ 220   1              tcp_3_checkreg();
  221   1              clean_r_datas();
- 222   1              tcp_3_checkreg();
- 223   1              clean_r_datas();
- 224   1      
- 225   1              tcp_4_checkgprs();
- 226   1              clean_r_datas();
- 227   1      
- 228   1              tcp_5_setapn();
- 229   1              clean_r_datas();
- 230   1      
- 231   1              tcp_6_getlink();
- 232   1              clean_r_datas();
- 233   1      
- 234   1              tcp_7_getip();
- 235   1              clean_r_datas();
- 236   1      
- 237   1              tcp_8_toserver();
- 238   1      //      clean_r_datas();   // 返回的是CONNETC OK，对下一步判断没有影响，可以不用清空，提高运行速度
- 239   1      
- 240   1              tcp_9_sendtext();
- 241   1      //      clean_r_datas();        // 后面无判断，注释掉提高运行速度
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 5   
+ 222   1      
+ 223   1              tcp_4_checkgprs();
+ 224   1              clean_r_datas();
+ 225   1      
+ 226   1              tcp_5_setapn();
+ 227   1              clean_r_datas();
+ 228   1      
+ 229   1              tcp_6_getlink();
+ 230   1              clean_r_datas();
+ 231   1      
+ 232   1              tcp_7_getip();
+ 233   1              clean_r_datas();
+ 234   1      
+ 235   1              tcp_8_toserver();
+ 236   1      //      clean_r_datas();   // 返回的是CONNETC OK，对下一步判断没有影响，可以不用清空，提高运行速度
+ 237   1      
+ 238   1              tcp_9_sendtext();
+ 239   1      //      clean_r_datas();        // 后面无判断，注释掉提高运行速度
+ 240   1      
+ 241   1              tcp_10_close();
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 5   
 
- 242   1      
- 243   1              tcp_10_close();
- 244   1      //      clean_r_datas();        // 后面无判断，注释掉提高运行速度
- 245   1      
- 246   1              tcp_11_shut();
- 247   1              clean_r_datas();
- 248   1      
- 249   1      }
- 250          
- 251          void tcp_1_checksim()
- 252          {
- 253   1              int i;
- 254   1              unsigned char *p;
- 255   1      
- 256   1              while(1)
- 257   1              {
- 258   2                      for(i = 0; i < sizeof(TC_TCP_CHECKSIM)-1; i++)
- 259   2                      {
- 260   3                              send_byte(TC_TCP_CHECKSIM[i]);
- 261   3                      }
- 262   2                      send_byte(0x0d);
- 263   2                      send_byte(0x0a);
- 264   2                      Delay10ms(5);
- 265   2      
- 266   2                      //正确返回：
- 267   2                      //+CPIN: READY
- 268   2      
- 269   2                      //OK
- 270   2                      p = strstr(r_datas,"OK");
- 271   2                      if(p != NULL)
- 272   2                      {
- 273   3                              P0 = 0x04;       // 0000 0100
- 274   3      
- 275   3                              break;
- 276   3                      }
- 277   2              }
- 278   1      
- 279   1      }
- 280          
- 281          void tcp_2_checknet()
- 282          {
- 283   1              int i;
- 284   1              unsigned char *p;
- 285   1      
- 286   1              while(1)
- 287   1              {
- 288   2                      for(i = 0; i < sizeof(TC_TCP_CHECKNET)-1; i++)
- 289   2                      {
- 290   3                              send_byte(TC_TCP_CHECKNET[i]);
- 291   3                      }
- 292   2                      send_byte(0x0d);
- 293   2                      send_byte(0x0a);
- 294   2                      Delay10ms(5);
- 295   2      
- 296   2                      //正确返回：
- 297   2                      //+CSQ: 20,0
- 298   2      
- 299   2                      //OK
- 300   2                      p = strstr(r_datas,"OK");
- 301   2                      if(p != NULL)
- 302   2                      {
- 303   3                              P0 = 0x08;       // 0000 1000
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 6   
+ 242   1      //      clean_r_datas();        // 后面无判断，注释掉提高运行速度
+ 243   1      
+ 244   1              tcp_11_shut();
+ 245   1              clean_r_datas();
+ 246   1      
+ 247   1      }
+ 248          
+ 249          void tcp_1_checksim()
+ 250          {
+ 251   1              int i;
+ 252   1              unsigned char *p;
+ 253   1      
+ 254   1              while(1)
+ 255   1              {
+ 256   2                      for(i = 0; i < sizeof(TC_TCP_CHECKSIM)-1; i++)
+ 257   2                      {
+ 258   3                              send_byte(TC_TCP_CHECKSIM[i]);
+ 259   3                      }
+ 260   2                      send_byte(0x0d);
+ 261   2                      send_byte(0x0a);
+ 262   2                      Delay10ms(5);
+ 263   2      
+ 264   2                      //正确返回：
+ 265   2                      //+CPIN: READY
+ 266   2      
+ 267   2                      //OK
+ 268   2                      p = strstr(r_datas,"OK");
+ 269   2                      if(p != NULL)
+ 270   2                      {
+ 271   3                              P0 = 0x04;       // 0000 0100
+ 272   3      
+ 273   3                              break;
+ 274   3                      }
+ 275   2              }
+ 276   1      
+ 277   1      }
+ 278          
+ 279          void tcp_2_checknet()
+ 280          {
+ 281   1              int i;
+ 282   1              unsigned char *p;
+ 283   1      
+ 284   1              while(1)
+ 285   1              {
+ 286   2                      for(i = 0; i < sizeof(TC_TCP_CHECKNET)-1; i++)
+ 287   2                      {
+ 288   3                              send_byte(TC_TCP_CHECKNET[i]);
+ 289   3                      }
+ 290   2                      send_byte(0x0d);
+ 291   2                      send_byte(0x0a);
+ 292   2                      Delay10ms(5);
+ 293   2      
+ 294   2                      //正确返回：
+ 295   2                      //+CSQ: 20,0
+ 296   2      
+ 297   2                      //OK
+ 298   2                      p = strstr(r_datas,"OK");
+ 299   2                      if(p != NULL)
+ 300   2                      {
+ 301   3                              P0 = 0x08;       // 0000 1000
+ 302   3      
+ 303   3                              break;
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 6   
 
- 304   3      
- 305   3                              break;
- 306   3                      }
- 307   2              }
- 308   1      
- 309   1      }
- 310          
- 311          void tcp_3_checkreg()
- 312          {
- 313   1              int i;
- 314   1              unsigned char *p;
- 315   1      
- 316   1              while(1)
- 317   1              {
- 318   2                      for(i = 0; i < sizeof(TC_TCP_CHECKREG)-1; i++)
- 319   2                      {
- 320   3                              send_byte(TC_TCP_CHECKREG[i]);
- 321   3                      }
- 322   2                      send_byte(0x0d);
- 323   2                      send_byte(0x0a);
- 324   2                      Delay10ms(5);
- 325   2      
- 326   2                      //正确返回：
- 327   2                      //+CREG: 0,1
- 328   2      
- 329   2                      //OK
- 330   2                      p = strstr(r_datas,"OK");
- 331   2                      if(p != NULL)
- 332   2                      {
- 333   3                              P0 = 0x10;       // 0001 0000
- 334   3      
- 335   3                              break;
- 336   3                      }
- 337   2              }
- 338   1      
- 339   1      }
- 340          
- 341          void tcp_4_checkgprs()
- 342          {
- 343   1              int i;
- 344   1              unsigned char *p;
- 345   1      
- 346   1              while(1)
- 347   1              {
- 348   2                      for(i = 0; i < sizeof(TC_TCP_CHECKGPRS)-1; i++)
- 349   2                      {
- 350   3                              send_byte(TC_TCP_CHECKGPRS[i]);
- 351   3                      }
- 352   2                      send_byte(0x0d);
- 353   2                      send_byte(0x0a);
- 354   2                      Delay10ms(5);
- 355   2      
- 356   2                      //正确返回：
- 357   2                      //+CGATT: 1
- 358   2      
- 359   2                      //OK
- 360   2                      p = strstr(r_datas,"OK");
- 361   2                      if(p != NULL)
- 362   2                      {
- 363   3                              P0 = 0x20;       // 0010 0000
- 364   3      
- 365   3                              break;
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 7   
+ 304   3                      }
+ 305   2              }
+ 306   1      
+ 307   1      }
+ 308          
+ 309          void tcp_3_checkreg()
+ 310          {
+ 311   1              int i;
+ 312   1              unsigned char *p;
+ 313   1      
+ 314   1              while(1)
+ 315   1              {
+ 316   2                      for(i = 0; i < sizeof(TC_TCP_CHECKREG)-1; i++)
+ 317   2                      {
+ 318   3                              send_byte(TC_TCP_CHECKREG[i]);
+ 319   3                      }
+ 320   2                      send_byte(0x0d);
+ 321   2                      send_byte(0x0a);
+ 322   2                      Delay10ms(5);
+ 323   2      
+ 324   2                      //正确返回：
+ 325   2                      //+CREG: 0,1
+ 326   2      
+ 327   2                      //OK
+ 328   2                      p = strstr(r_datas,"OK");
+ 329   2                      if(p != NULL)
+ 330   2                      {
+ 331   3                              P0 = 0x10;       // 0001 0000
+ 332   3      
+ 333   3                              break;
+ 334   3                      }
+ 335   2              }
+ 336   1      
+ 337   1      }
+ 338          
+ 339          void tcp_4_checkgprs()
+ 340          {
+ 341   1              int i;
+ 342   1              unsigned char *p;
+ 343   1      
+ 344   1              while(1)
+ 345   1              {
+ 346   2                      for(i = 0; i < sizeof(TC_TCP_CHECKGPRS)-1; i++)
+ 347   2                      {
+ 348   3                              send_byte(TC_TCP_CHECKGPRS[i]);
+ 349   3                      }
+ 350   2                      send_byte(0x0d);
+ 351   2                      send_byte(0x0a);
+ 352   2                      Delay10ms(5);
+ 353   2      
+ 354   2                      //正确返回：
+ 355   2                      //+CGATT: 1
+ 356   2      
+ 357   2                      //OK
+ 358   2                      p = strstr(r_datas,"OK");
+ 359   2                      if(p != NULL)
+ 360   2                      {
+ 361   3                              P0 = 0x20;       // 0010 0000
+ 362   3      
+ 363   3                              break;
+ 364   3                      }
+ 365   2              }
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 7   
 
- 366   3                      }
- 367   2              }
- 368   1      
- 369   1      }
- 370          
- 371          void tcp_5_setapn()
- 372          {
- 373   1              int i;
- 374   1      //      unsigned char *p;
- 375   1      
- 376   1      //      while(1)   // 设置超过一次就会错误
- 377   1      //      {
- 378   1                      for(i = 0; i < sizeof(TC_TCP_SETAPN)-1; i++)
- 379   1                      {
- 380   2                              send_byte(TC_TCP_SETAPN[i]);
- 381   2                      }
- 382   1                      send_byte(0x0d);
- 383   1                      send_byte(0x0a);
- 384   1                      Delay10ms(5);
+ 366   1      
+ 367   1      }
+ 368          
+ 369          void tcp_5_setapn()
+ 370          {
+ 371   1              int i;
+ 372   1      //      unsigned char *p;
+ 373   1      
+ 374   1      //      while(1)   // 设置超过一次就会错误
+ 375   1      //      {
+ 376   1                      for(i = 0; i < sizeof(TC_TCP_SETAPN)-1; i++)
+ 377   1                      {
+ 378   2                              send_byte(TC_TCP_SETAPN[i]);
+ 379   2                      }
+ 380   1                      send_byte(0x0d);
+ 381   1                      send_byte(0x0a);
+ 382   1                      Delay10ms(5);
+ 383   1      
+ 384   1                      P0 = 0x40;       // 0100 0000
  385   1      
- 386   1                      P0 = 0x40;       // 0100 0000
- 387   1      
- 388   1      
- 389   1                      //正确返回
- 390   1                      //OK
- 391   1      //              p = strstr(r_datas,"OK");
- 392   1      //              if(p != NULL)
- 393   1      //              {
- 394   1      //                      break;
- 395   1      //              }
- 396   1      //      }
- 397   1      
- 398   1      }
- 399          
- 400          void tcp_6_getlink()
- 401          {
- 402   1              int i;
- 403   1      //      unsigned char *p;
- 404   1      
- 405   1      //      while(1)  // 设置超过一次就会错误
- 406   1      //      {
- 407   1                      for(i = 0; i < sizeof(TC_TCP_GETLINK)-1; i++)
- 408   1                      {
- 409   2                              send_byte(TC_TCP_GETLINK[i]);
- 410   2                      }
- 411   1                      send_byte(0x0d);
- 412   1                      send_byte(0x0a);
- 413   1                      Delay10ms(5);
+ 386   1      
+ 387   1                      //正确返回
+ 388   1                      //OK
+ 389   1      //              p = strstr(r_datas,"OK");
+ 390   1      //              if(p != NULL)
+ 391   1      //              {
+ 392   1      //                      break;
+ 393   1      //              }
+ 394   1      //      }
+ 395   1      
+ 396   1      }
+ 397          
+ 398          void tcp_6_getlink()
+ 399          {
+ 400   1              int i;
+ 401   1      //      unsigned char *p;
+ 402   1      
+ 403   1      //      while(1)  // 设置超过一次就会错误
+ 404   1      //      {
+ 405   1                      for(i = 0; i < sizeof(TC_TCP_GETLINK)-1; i++)
+ 406   1                      {
+ 407   2                              send_byte(TC_TCP_GETLINK[i]);
+ 408   2                      }
+ 409   1                      send_byte(0x0d);
+ 410   1                      send_byte(0x0a);
+ 411   1                      Delay10ms(5);
+ 412   1      
+ 413   1                      P0 = 0x80;       // 1000 0000
  414   1      
- 415   1                      P0 = 0x80;       // 1000 0000
- 416   1      
- 417   1      
- 418   1                      //正确返回
- 419   1                      //OK
- 420   1      //              p = strstr(r_datas,"OK");
- 421   1      //              if(p != NULL)
- 422   1      //              {
- 423   1      //                      break;
- 424   1      //              }
- 425   1      //      }
- 426   1      
- 427   1      }
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 8   
+ 415   1      
+ 416   1                      //正确返回
+ 417   1                      //OK
+ 418   1      //              p = strstr(r_datas,"OK");
+ 419   1      //              if(p != NULL)
+ 420   1      //              {
+ 421   1      //                      break;
+ 422   1      //              }
+ 423   1      //      }
+ 424   1      
+ 425   1      }
+ 426          
+ 427          void tcp_7_getip()
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 8   
 
- 428          
- 429          void tcp_7_getip()
- 430          {
- 431   1              int i;
- 432   1      //      unsigned char *p;
- 433   1      
- 434   1      //      while(1)  
- 435   1      //      {
- 436   1                      for(i = 0; i < sizeof(TC_TCP_GETIP)-1; i++)
- 437   1                      {
- 438   2                              send_byte(TC_TCP_GETIP[i]);
- 439   2                      }
- 440   1                      send_byte(0x0d);
- 441   1                      send_byte(0x0a);
- 442   1                      Delay10ms(5);
- 443   1      
+ 428          {
+ 429   1              int i;
+ 430   1      //      unsigned char *p;
+ 431   1      
+ 432   1      //      while(1)  
+ 433   1      //      {
+ 434   1                      for(i = 0; i < sizeof(TC_TCP_GETIP)-1; i++)
+ 435   1                      {
+ 436   2                              send_byte(TC_TCP_GETIP[i]);
+ 437   2                      }
+ 438   1                      send_byte(0x0d);
+ 439   1                      send_byte(0x0a);
+ 440   1                      Delay10ms(5);
+ 441   1      
+ 442   1      
+ 443   1                      P0 = 0x03;       // 0000 0011
  444   1      
- 445   1                      P0 = 0x03;       // 0000 0011
- 446   1      
- 447   1      
- 448   1                      //正确返回：
- 449   1                      //10.42.6.249
- 450   1      //              p = strstr(r_datas,".");
- 451   1      //              if(p != NULL)
- 452   1      //              {
- 453   1      //                      break;
- 454   1      //              }
- 455   1      //      }
- 456   1      
- 457   1      }
- 458          
- 459          void tcp_8_toserver()
- 460          {
- 461   1              int i;
- 462   1              unsigned char *p;
- 463   1      
- 464   1              while(1)
- 465   1              {
- 466   2                      for(i = 0; i < sizeof(TC_TCP_TOSERVER)-1; i++)
- 467   2                      {
- 468   3                              send_byte(TC_TCP_TOSERVER[i]);
- 469   3                      }
- 470   2                      send_byte(0x0d);
- 471   2                      send_byte(0x0a);
- 472   2                      Delay10ms(10);
+ 445   1      
+ 446   1                      //正确返回：
+ 447   1                      //10.42.6.249
+ 448   1      //              p = strstr(r_datas,".");
+ 449   1      //              if(p != NULL)
+ 450   1      //              {
+ 451   1      //                      break;
+ 452   1      //              }
+ 453   1      //      }
+ 454   1      
+ 455   1      }
+ 456          
+ 457          void tcp_8_toserver()
+ 458          {
+ 459   1              int i;
+ 460   1              unsigned char *p;
+ 461   1      
+ 462   1              while(1)
+ 463   1              {
+ 464   2                      for(i = 0; i < sizeof(TC_TCP_TOSERVER)-1; i++)
+ 465   2                      {
+ 466   3                              send_byte(TC_TCP_TOSERVER[i]);
+ 467   3                      }
+ 468   2                      send_byte(0x0d);
+ 469   2                      send_byte(0x0a);
+ 470   2                      Delay10ms(10);
+ 471   2      
+ 472   2                      P0 = 0x0c;       // 0000 1100
  473   2      
- 474   2                      P0 = 0x0c;       // 0000 1100
- 475   2      
- 476   2      //              send_byte(0x30); // 0
- 477   2      //              send_byte(0x0d);
- 478   2      //              send_byte(0x0a);
- 479   2      //              print_r_datas();
- 480   2      //              send_byte(0x0d);
- 481   2      //              send_byte(0x0a);
- 482   2      //              send_byte(0x30); // 0
- 483   2      
- 484   2      
- 485   2                      //正确返回：
- 486   2                      //OK
- 487   2      
- 488   2                      //CONNECT OK
- 489   2                      p = strstr(r_datas,"CONNECT OK");
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 9   
+ 474   2      //              send_byte(0x30); // 0
+ 475   2      //              send_byte(0x0d);
+ 476   2      //              send_byte(0x0a);
+ 477   2      //              print_r_datas();
+ 478   2      //              send_byte(0x0d);
+ 479   2      //              send_byte(0x0a);
+ 480   2      //              send_byte(0x30); // 0
+ 481   2      
+ 482   2      
+ 483   2                      //正确返回：
+ 484   2                      //OK
+ 485   2      
+ 486   2                      //CONNECT OK
+ 487   2                      p = strstr(r_datas,"CONNECT OK");
+ 488   2                      if(p != NULL)
+ 489   2                      {
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 9   
 
- 490   2                      if(p != NULL)
- 491   2                      {
- 492   3                              break;
- 493   3                      }
- 494   2              }
- 495   1      
- 496   1      }
- 497          
- 498          void tcp_9_sendtext()
- 499          {
- 500   1              int i;
- 501   1              unsigned char *p;
- 502   1              unsigned char *g;
- 503   1              int j;
- 504   1      
- 505   1              while(1)
- 506   1              {
- 507   2                      for(i = 0; i < sizeof(TC_TCP_SENDTEXT)-1; i++)
- 508   2                      {
- 509   3                              send_byte(TC_TCP_SENDTEXT[i]);
- 510   3                      }
- 511   2                      send_byte(0x0d);
- 512   2                      send_byte(0x0a);
- 513   2                      Delay10ms(5); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
- 514   2                                                      // 连接模块的时候可以适当调小
- 515   2                      P0 = 0x30;       // 0011 0000
- 516   2      
- 517   2                      //      正确返回：
- 518   2                      //      >
- 519   2      
- 520   2                      //      然后输入内容
- 521   2                      //  最后输入结束符：1A
- 522   2      
- 523   2                      //      发送成功返回：
- 524   2                      //      SEND OK
- 525   2                      //
- 526   2                      //      CLOSED
- 527   2      
- 528   2                      p = strstr(r_datas,">");
- 529   2                      if(p != NULL)
- 530   2                      {
- 531   3                              break;                                                    
- 532   3                      }
- 533   2              }
- 534   1      
- 535   1              while(1)
- 536   1              {
- 537   2                      for(j = 16;j < strlen(t_datas); j++)     // 跳过短信前面的无效字符从长度开始发
- 538   2                      {
- 539   3                              send_byte(t_datas[j]);
- 540   3                      }
- 541   2                      send_byte(0x0d);
- 542   2                      send_byte(0x0a);
- 543   2                      send_byte(0x1a);
+ 490   3                              break;
+ 491   3                      }
+ 492   2              }
+ 493   1      
+ 494   1      }
+ 495          
+ 496          void tcp_9_sendtext()
+ 497          {
+ 498   1              int i;
+ 499   1              unsigned char *p;
+ 500   1              unsigned char *g;
+ 501   1              int j;
+ 502   1      
+ 503   1              while(1)
+ 504   1              {
+ 505   2                      for(i = 0; i < sizeof(TC_TCP_SENDTEXT)-1; i++)
+ 506   2                      {
+ 507   3                              send_byte(TC_TCP_SENDTEXT[i]);
+ 508   3                      }
+ 509   2                      send_byte(0x0d);
+ 510   2                      send_byte(0x0a);
+ 511   2                      Delay10ms(5); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
+ 512   2                                                      // 连接模块的时候可以适当调小
+ 513   2                      P0 = 0x30;       // 0011 0000
+ 514   2      
+ 515   2                      //      正确返回：
+ 516   2                      //      >
+ 517   2      
+ 518   2                      //      然后输入内容
+ 519   2                      //  最后输入结束符：1A
+ 520   2      
+ 521   2                      //      发送成功返回：
+ 522   2                      //      SEND OK
+ 523   2                      //
+ 524   2                      //      CLOSED
+ 525   2      
+ 526   2                      p = strstr(r_datas,">");
+ 527   2                      if(p != NULL)
+ 528   2                      {
+ 529   3                              break;                                                    
+ 530   3                      }
+ 531   2              }
+ 532   1      
+ 533   1              while(1)
+ 534   1              {
+ 535   2                      for(j = 16;j < strlen(t_datas); j++)     // 跳过短信前面的无效字符从长度开始发
+ 536   2                      {
+ 537   3                              send_byte(t_datas[j]);
+ 538   3                      }
+ 539   2                      send_byte(0x0d);
+ 540   2                      send_byte(0x0a);
+ 541   2                      send_byte(0x1a);
+ 542   2                      
+ 543   2      //              Delay10ms(10);          // 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明  
  544   2                      
- 545   2      //              Delay10ms(10);          // 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明  
- 546   2                      
- 547   2                      send_byte(0x3e);        // '>'
- 548   2                      P0 = 0xc0;       // 1100 0000
- 549   2      
- 550   2              
- 551   2                      g = strstr(r_datas,"SEND OK");
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 10  
+ 545   2                      send_byte(0x3c);        // '<'
+ 546   2                      P0 = 0xc0;       // 1100 0000
+ 547   2      
+ 548   2              
+ 549   2                      g = strstr(r_datas,"SEND OK");
+ 550   2                      if(g != NULL)
+ 551   2                      {
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 10  
 
- 552   2                      if(g != NULL)
- 553   2                      {
- 554   3                              P0 = 0xe0;       // 1110 0000
- 555   3      
- 556   3                              // 清空t_datas
- 557   3                              memset(t_datas,0,sizeof(t_datas));
- 558   3                              break;
- 559   3                      }
- 560   2              }
- 561   1      }
- 562          
- 563          void tcp_10_close()
- 564          {
- 565   1              int i;
- 566   1              unsigned char *p;
- 567   1      
- 568   1      //      while(1)
- 569   1      //      {
- 570   1                      for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
- 571   1                      {
- 572   2                              send_byte(TC_TCP_CLOSE[i]);
- 573   2                      }
- 574   1                      send_byte(0x0d);
- 575   1                      send_byte(0x0a);
- 576   1                      Delay10ms(5);
+ 552   3                              P0 = 0xe0;       // 1110 0000
+ 553   3      
+ 554   3                              // 清空t_datas
+ 555   3                              memset(t_datas,0,sizeof(t_datas));
+ 556   3                              break;
+ 557   3                      }
+ 558   2              }
+ 559   1      }
+ 560          
+ 561          void tcp_10_close()
+ 562          {
+ 563   1              int i;
+ 564   1              unsigned char *p;
+ 565   1      
+ 566   1      //      while(1)
+ 567   1      //      {
+ 568   1                      for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
+ 569   1                      {
+ 570   2                              send_byte(TC_TCP_CLOSE[i]);
+ 571   2                      }
+ 572   1                      send_byte(0x0d);
+ 573   1                      send_byte(0x0a);
+ 574   1                      Delay10ms(5);
+ 575   1      
+ 576   1                      P0 = 0x07;       // 0000 0111
  577   1      
- 578   1                      P0 = 0x07;       // 0000 0111
- 579   1      
- 580   1                      // 发送成功返回的是字符串 "CLOSE OK"
- 581   1                      p = strstr(r_datas,"OK");
- 582   1                      if(p != NULL)
- 583   1                      {
- 584   2      //                      break;
- 585   2                      }
- 586   1      //      }
- 587   1      
- 588   1      }
- 589          
- 590          void tcp_11_shut()
- 591          {
- 592   1              int i;
- 593   1              unsigned char *p;
- 594   1              
- 595   1              for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
- 596   1              {
- 597   2                      send_byte(TC_TCP_SHUT[i]);
- 598   2              }
- 599   1              send_byte(0x0d);
- 600   1              send_byte(0x0a);
- 601   1              Delay10ms(5);   
+ 578   1                      // 发送成功返回的是字符串 "CLOSE OK"
+ 579   1                      p = strstr(r_datas,"OK");
+ 580   1                      if(p != NULL)
+ 581   1                      {
+ 582   2      //                      break;
+ 583   2                      }
+ 584   1      //      }
+ 585   1      
+ 586   1      }
+ 587          
+ 588          void tcp_11_shut()
+ 589          {
+ 590   1              int i;
+ 591   1              unsigned char *p;
+ 592   1              
+ 593   1              for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
+ 594   1              {
+ 595   2                      send_byte(TC_TCP_SHUT[i]);
+ 596   2              }
+ 597   1              send_byte(0x0d);
+ 598   1              send_byte(0x0a);
+ 599   1              Delay10ms(5);   
+ 600   1      
+ 601   1              p = strstr(r_datas,"SHUT OK");
  602   1      
- 603   1              p = strstr(r_datas,"SHUT OK");
- 604   1      
- 605   1              if(p != NULL)
- 606   1              {
- 607   2                      //do something
- 608   2              }
+ 603   1              if(p != NULL)
+ 604   1              {
+ 605   2                      //do something
+ 606   2              }
+ 607   1      
+ 608   1              P0 = 0x38;       // 0011 1000
  609   1      
- 610   1              P0 = 0x38;       // 0011 1000
- 611   1      
- 612   1      }
+ 610   1      }
+ 611          
+ 612          
  613          
-C51 COMPILER V9.01   SIM800L                                                               04/01/2019 16:16:10 PAGE 11  
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 11  
 
  614          
- 615          
- 616          
- 617          void serial() interrupt 4
- 618          {
- 619   1              if(RI == 1)
- 620   1              {
- 621   2                      RI = 0;
- 622   2      //              index = 0;
- 623   2                      r_datas[index++] = SBUF;
- 624   2                      if(index > MAX)
- 625   2                      {
- 626   3                              MAX = index;
- 627   3                      }
- 628   2                      if(index > sizeof(r_datas))
- 629   2                      {
- 630   3                              index = 0;
- 631   3                      }
- 632   2      
- 633   2              }
- 634   1      }
+ 615          void serial() interrupt 4
+ 616          {
+ 617   1              if(RI == 1)
+ 618   1              {
+ 619   2                      RI = 0;
+ 620   2      //              index = 0;
+ 621   2                      r_datas[index++] = SBUF;
+ 622   2                      if(index > MAX)
+ 623   2                      {
+ 624   3                              MAX = index;
+ 625   3                      }
+ 626   2                      if(index > sizeof(r_datas))
+ 627   2                      {
+ 628   3                              index = 0;
+ 629   3                      }
+ 630   2      
+ 631   2              }
+ 632   1      }
+ 633          
+ 634          
  635          
- 636          
- 637          
- 638          void UsartConfiguration()
- 639          {
- 640   1              SCON=0X50;                      //设置为工作方式1
- 641   1              TMOD=0X20;                      //设置计数器工作方式2
- 642   1              PCON=0X80;                      //波特率加倍
- 643   1              TH1=0XF3;                   //计数器初始值设置，注意波特率是4800的
- 644   1              TL1=0XF3;
- 645   1              ES=1;                                           //打开接收中断
- 646   1              EA=1;                                           //打开总中断
- 647   1              TR1=1;                                      //打开计数器
- 648   1      }
- 649          
- 650          
- 651          void Delay10ms(unsigned int c)   //误差 0us
- 652          {
- 653   1          unsigned char a, b;
- 654   1      
- 655   1              //--c已经在传递过来的时候已经赋值了，所以在for语句第一句就不用赋值了--//
- 656   1          for (;c>0;c--)
- 657   1              {
- 658   2                      for (b=38;b>0;b--)
- 659   2                      {
- 660   3                              for (a=130;a>0;a--);
- 661   3                      }          
- 662   2              }       
- 663   1      }
+ 636          void UsartConfiguration()
+ 637          {
+ 638   1              SCON=0X52;                      //设置为工作方式1
+ 639   1              TMOD=0X20;                      //设置计数器工作方式2
+ 640   1              PCON=0X80;
+ 641   1              //0x00;                 //波特率不加倍
+ 642   1              //0x80;                 //波特率加倍
+ 643   1      
+ 644   1              TH1=0XFD;
+ 645   1              //0XF3;             //计数器初始值设置，注意波特率是4800的
+ 646   1              TL1=0XFD;
+ 647   1              //0XF3;
+ 648   1              ES=1;                                           //打开接收中断
+ 649   1              EA=1;                                           //打开总中断
+ 650   1              TR1=1;                                      //打开计数器
+ 651   1      }
+ 652          
+ 653          
+ 654          void Delay10ms(unsigned int c)   //误差 0us
+ 655          {
+ 656   1          unsigned char a, b;
+ 657   1      
+ 658   1              //--c已经在传递过来的时候已经赋值了，所以在for语句第一句就不用赋值了--//
+ 659   1          for (;c>0;c--)
+ 660   1              {
+ 661   2                      for (b=38;b>0;b--)
+ 662   2                      {
+ 663   3                              for (a=130;a>0;a--);
+ 664   3                      }          
+ 665   2              }       
+ 666   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1327    ----
+   CODE SIZE        =   1324    ----
    CONSTANT SIZE    =    201    ----
    XDATA SIZE       =    800    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =      4      42
    IDATA SIZE       =   ----    ----
+C51 COMPILER V9.01   SIM800L                                                               04/01/2019 23:40:57 PAGE 12  
+
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
 
