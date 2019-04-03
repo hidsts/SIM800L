@@ -4,6 +4,7 @@
 #define LENGTH 400		// 收到一条最大短信大概350字节
 
 unsigned char code TC_CONNECT[] = "AT";					// 发送内容连接
+unsigned char code TC_BAUD[] = "AT+IPR=19200";			// 波特率
 unsigned char code TC_RUNMODE[] = "AT+CNMI=2,2,0,0,0";	// 发送内容模式
 
 unsigned char code TC_TCP_CHECKSIM[] = "AT+CPIN?";		// 1.检查SIM状态
@@ -27,12 +28,17 @@ unsigned int data index=0;								// 缓存数组索引
 //--声明全局函数--//
 void UsartConfiguration();				// 串口参数配
 void Delay10ms(unsigned int c);   		// 误差 0us		# 感觉要*20 就是1000ms等于20s
+void Delay1ms(unsigned int i);
 void send_byte(unsigned char ch);		// 发送一个字节 
+void send_string(unsigned char *p);		// 发送字符串
 void print_r_datas();						// 调试用，输出r_datas数据
 void print_t_datas();						// 调试用，输出t_datas数据
 void clean_r_datas();						// data1数组清零
 
+
+void start();
 void sim800l_connect();					// 自适应波特率连接SIM800L模块
+void sim800l_set_baud();
 void sim800l_set_runmode();				// 设置模块接收到新短信直接转发至MCU
 void sim800l_wait_sms();				// 轮询短信
 
@@ -50,34 +56,9 @@ void tcp_10_close();
 void tcp_11_shut();
 
 
-/*******************************************************************************
-* 函 数 名         : main
-* 函数功能		   : 主函数
-* 输    入         : 无
-* 输    出         : 无
-*******************************************************************************/
-
 void main()
 {
-	UsartConfiguration();
-
-	P0 = 0x01;	 // 0000 0001
-
-	sim800l_connect();
-
-	clean_r_datas();
-
-	sim800l_set_runmode();
-
-	clean_r_datas();
-
-	sim800l_wait_sms();
-
-
-
-	send_byte('e');
-
-
+	start();
 	while(1);		// 调试用，防止死循环看不出代码差异
 	
 }
@@ -88,6 +69,14 @@ void send_byte(unsigned char ch)
 	while(TI!=1);
 	TI = 0;
 	SBUF = ch;
+}
+
+void send_string(unsigned char *p)
+{
+	while(*p != '\0')
+	{
+		send_byte(*p++);
+	}
 }
 
 
@@ -116,21 +105,39 @@ void clean_r_datas()
 	index = 0;
 }
 
+void start()
+{
+ 	UsartConfiguration();
+
+	P0 = 0x01;	 // 0000 0001
+
+	sim800l_connect();
+
+	clean_r_datas();
+
+	sim800l_set_baud();
+
+	clean_r_datas();
+
+	sim800l_set_runmode();
+
+	clean_r_datas();
+
+	sim800l_wait_sms();
+}
+
 
 void sim800l_connect()
 {
-	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_CONNECT)-1; i++)
-		{
-			send_byte(TC_CONNECT[i]);	
-		}
+		send_string(TC_CONNECT);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(1);
+		Delay1ms(2);
 
 		p = strstr(r_datas,"OK");
 		if(p != NULL)
@@ -140,27 +147,42 @@ void sim800l_connect()
 	}
 }
 
-
-void sim800l_set_runmode()
+void sim800l_set_baud()
 {
-	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_RUNMODE)-1; i++)
-	 	{
-			send_byte(TC_RUNMODE[i]);
-		}
+		send_string(TC_BAUD);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(1);
+		Delay1ms(2);
 
 		p = strstr(r_datas,"OK");
 		if(p != NULL)
 		{
 			break;
+		}
+	}
+}
 
+void sim800l_set_runmode()
+{
+	unsigned char *p;
+
+	while(1)
+	{
+		send_string(TC_RUNMODE);
+
+		send_byte(0x0d);
+		send_byte(0x0a);
+		Delay1ms(2);
+
+		p = strstr(r_datas,"OK");
+		if(p != NULL)
+		{
+			break;
 		}
 	}
 }
@@ -180,7 +202,7 @@ void sim800l_wait_sms()
 		send_byte(0x54); 		// T
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(10);
+		Delay1ms(20);
 		
 		// 这个延迟时间必须足够，不然串口收到的数据（短信）不完整
 		// 给串口中断足够的时间去接收数据放入数组
@@ -212,6 +234,14 @@ void sim800l_wait_sms()
 
 void tcp()
 {
+
+	send_byte(0x3e);	// '>'
+	send_byte(MAX+'0');
+	send_byte(0x3c);	// '<'
+	
+	tcp_10_close();
+	Delay1ms(5);
+
 	tcp_1_checksim();
 	clean_r_datas();
 
@@ -248,18 +278,15 @@ void tcp()
 
 void tcp_1_checksim()
 {
- 	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKSIM)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKSIM[i]);
-		}
+		send_string(TC_TCP_CHECKSIM);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 	 	//正确返回：
 		//+CPIN: READY
@@ -269,27 +296,22 @@ void tcp_1_checksim()
 		if(p != NULL)
 		{
 			P0 = 0x04;	 // 0000 0100
-
 			break;
 		}
 	}
-
 }
 
 void tcp_2_checknet()
 {
- 	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKNET)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKNET[i]);
-		}
+		send_string(TC_TCP_CHECKNET);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 		//正确返回：
 		//+CSQ: 20,0
@@ -299,27 +321,22 @@ void tcp_2_checknet()
 		if(p != NULL)
 		{
 			P0 = 0x08;	 // 0000 1000
-
 			break;
 		}
 	}
-
 }
 
 void tcp_3_checkreg()
 {
- 	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKREG)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKREG[i]);
-		}
+		send_string(TC_TCP_CHECKREG);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 		//正确返回：
 		//+CREG: 0,1
@@ -329,27 +346,22 @@ void tcp_3_checkreg()
 		if(p != NULL)
 		{
 			P0 = 0x10;	 // 0001 0000
-
 			break;
 		}
 	}
-
 }
 
 void tcp_4_checkgprs()
 {
- 	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKGPRS)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKGPRS[i]);
-		}
+		send_string(TC_TCP_CHECKGPRS);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 		//正确返回：
 		//+CGATT: 1
@@ -359,27 +371,22 @@ void tcp_4_checkgprs()
 		if(p != NULL)
 		{
 			P0 = 0x20;	 // 0010 0000
-
 			break;
 		}
 	}
-
 }
 
 void tcp_5_setapn()
 {
- 	int i;
 //	unsigned char *p;
 
 //	while(1)   // 设置超过一次就会错误
 //	{
-		for(i = 0; i < sizeof(TC_TCP_SETAPN)-1; i++)
-	 	{
-			send_byte(TC_TCP_SETAPN[i]);
-		}
+		send_string(TC_TCP_SETAPN);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 		P0 = 0x40;	 // 0100 0000
 
@@ -392,23 +399,19 @@ void tcp_5_setapn()
 //			break;
 //		}
 //	}
-
 }
 
 void tcp_6_getlink()
 {
- 	int i;
 //	unsigned char *p;
 
 //	while(1)  // 设置超过一次就会错误
 //	{
-		for(i = 0; i < sizeof(TC_TCP_GETLINK)-1; i++)
-	 	{
-			send_byte(TC_TCP_GETLINK[i]);
-		}
+		send_string(TC_TCP_GETLINK);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(20);
 
 		P0 = 0x80;	 // 1000 0000
 
@@ -421,27 +424,21 @@ void tcp_6_getlink()
 //			break;
 //		}
 //	}
-
 }
 
 void tcp_7_getip()
 {
- 	int i;
 //	unsigned char *p;
 
 //	while(1)  
 //	{
-		for(i = 0; i < sizeof(TC_TCP_GETIP)-1; i++)
-	 	{
-			send_byte(TC_TCP_GETIP[i]);
-		}
+		send_string(TC_TCP_GETIP);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
-
+		Delay1ms(20);
 
 		P0 = 0x03;	 // 0000 0011
-
 
 		//正确返回：
 		//10.42.6.249
@@ -451,23 +448,19 @@ void tcp_7_getip()
 //			break;
 //		}
 //	}
-
 }
 
 void tcp_8_toserver()
 {
- 	int i;
 	unsigned char *p;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_TOSERVER)-1; i++)
-	 	{
-			send_byte(TC_TCP_TOSERVER[i]);
-		}
+		send_string(TC_TCP_TOSERVER);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(10);
+		Delay1ms(100);
 
 		P0 = 0x0c;	 // 0000 1100
 
@@ -490,38 +483,23 @@ void tcp_8_toserver()
 			break;
 		}
 	}
-
 }
 
 void tcp_9_sendtext()
 {
- 	int i;
 	unsigned char *p;
 	unsigned char *g;
 	int j;
 
 	while(1)
 	{
-		for(i = 0; i < sizeof(TC_TCP_SENDTEXT)-1; i++)
-	 	{
-			send_byte(TC_TCP_SENDTEXT[i]);
-		}
+		send_string(TC_TCP_SENDTEXT);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
+		Delay1ms(20); // 在调试的时候需要把延迟加大，服务器向串口发送'>'字符串，才会向TCP服务器发送数据
 						// 连接模块的时候可以适当调小
 		P0 = 0x30;	 // 0011 0000
-
-		//	正确返回：
-		//	>
-
-		//	然后输入内容
-		//  最后输入结束符：1A
-
-		//	发送成功返回：
-		//	SEND OK
-		//
-		//	CLOSED
 
 		p = strstr(r_datas,">");
 		if(p != NULL)
@@ -532,25 +510,25 @@ void tcp_9_sendtext()
 
 	while(1)
 	{
-		for(j = 16;j < strlen(t_datas); j++)	 // 跳过短信前面的无效字符从长度开始发
+		for(j = 14;j < strlen(t_datas); j++)	 // 16 跳过短信前面的无效字符从长度开始发
 		{
 			send_byte(t_datas[j]);
 		}
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		send_byte(0x1a);
-		
+		send_byte(0x1a);	
+
 //		Delay10ms(10);		// 这里不能延迟。延迟会导致收不到SEND OK信号，原因不明	
-	   	
-		send_byte(0x3c);	// '<'
+	   						 // 无论延迟与否，数据都会发两次才会收到SEND OK信号
+		send_byte(0x3c);	// '<''
+		
 		P0 = 0xc0;	 // 1100 0000
 
-	
 		g = strstr(r_datas,"SEND OK");
 		if(g != NULL)
 		{
 			P0 = 0xe0;	 // 1110 0000
-
 			// 清空t_datas
 			memset(t_datas,0,sizeof(t_datas));
 			break;
@@ -560,18 +538,15 @@ void tcp_9_sendtext()
 
 void tcp_10_close()
 {
- 	int i;
 	unsigned char *p;
 
 //	while(1)
 //	{
-		for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
-	 	{
-			send_byte(TC_TCP_CLOSE[i]);
-		}
+		send_string(TC_TCP_CLOSE);
+
 		send_byte(0x0d);
 		send_byte(0x0a);
-		Delay10ms(5);
+		Delay1ms(2);
 
 		P0 = 0x07;	 // 0000 0111
 
@@ -582,31 +557,20 @@ void tcp_10_close()
 //			break;
 		}
 //	}
-
 }
 
 void tcp_11_shut()
 {
-	int i;
 	unsigned char *p;
 	
-	for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
-	{
-		send_byte(TC_TCP_SHUT[i]);
-	}
+	send_string(TC_TCP_SHUT);
+
 	send_byte(0x0d);
-	send_byte(0x0a);
-	Delay10ms(5);	
+	send_byte(0x0a);	
 
 	p = strstr(r_datas,"SHUT OK");
 
-	if(p != NULL)
-	{
-		//do something
-	}
-
 	P0 = 0x38;	 // 0011 1000
-
 }
 
 
@@ -617,7 +581,6 @@ void serial() interrupt 4
  	if(RI == 1)
 	{
 		RI = 0;
-//		index = 0;
 		r_datas[index++] = SBUF;
 		if(index > MAX)
 		{
@@ -627,7 +590,6 @@ void serial() interrupt 4
 		{
 			index = 0;
 		}
-
 	}
 }
 
@@ -658,4 +620,13 @@ void Delay10ms(unsigned int c)   //误差 0us
 			for (a=130;a>0;a--);
 		}          
 	}       
+}
+
+void Delay1ms(unsigned int i)
+{
+ 	unsigned int j;
+	while(i--)
+	{
+	 	for(j = 0; j < 125; j++);
+	}
 }

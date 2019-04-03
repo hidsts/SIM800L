@@ -7,3 +7,16 @@ D:\GitHub\SIM800L\mcu\sim800l.uvproj
 Project File Date:  04/01/2019
 
 <h2>Output:</h2>
+Build target 'Target 1'
+assembling STARTUP.A51...
+compiling sim800l.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PRINT_R_DATAS?SIM800L
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PRINT_T_DATAS?SIM800L
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_DELAY10MS?SIM800L
+Program Size: data=40.0 xdata=800 code=2877
+creating hex file from "sim800l"...
+"sim800l" - 0 Error(s), 3 Warning(s).
