@@ -1,663 +1,710 @@
-#include <reg51.h>  
+#include <reg51.h>
 #include <string.h>
 
-#define LENGTH 400		//  ’µΩ“ªÃı◊Ó¥Û∂Ã–≈¥Û∏≈350◊÷Ω⁄
 
-unsigned char code TC_CONNECT[] = "AT";					// ∑¢ÀÕƒ⁄»›¡¨Ω”
-unsigned char code TC_RUNMODE[] = "AT+CNMI=2,2,0,0,0";	// ∑¢ÀÕƒ⁄»›ƒ£ Ω
+#define START       0x00
+#define AIRPLANE    0x01
+#define MOBILE      0x02
+#define REARY       0x03
+#define ONLINE      0x04
+#define SIM         0x05
+#define REG         0x06
+#define SIGNAL      0x07
+#define SHUT        0x08
+#define NEWSMS      0x09
+#define APN         0x10
+#define GPRS        0x11
+#define IP          0x12
+#define SERVER      0x13 
 
-unsigned char code TC_TCP_CHECKSIM[] = "AT+CPIN?";		// 1.ºÏ≤ÈSIM◊¥Ã¨
-unsigned char code TC_TCP_CHECKNET[] = "AT+CSQ";			// 2.ºÏ≤ÈÕ¯¬Á–≈∫≈«ø∂»
-unsigned char code TC_TCP_CHECKREG[] = "AT+CREG?";		// 3.ºÏ≤ÈÕ¯¬Á◊¢≤·◊¥Ã¨
-unsigned char code TC_TCP_CHECKGPRS[] = "AT+CGATT?"; 		// 4.ºÏ≤ÈGPRS∏Ω◊≈◊¥Ã¨
-unsigned char code TC_TCP_SETAPN[] = "AT+CSTT=\"CMNET\"";// 5.…Ë÷√APN
-unsigned char code TC_TCP_GETLINK[] = "AT+CIICR";		// 6.Ω®¡¢Œﬁœﬂ¡¥¬∑
-unsigned char code TC_TCP_GETIP[] = "AT+CIFSR";			// ªÒµ√±æµÿIPµÿ÷∑
-unsigned char code TC_TCP_TOSERVER[] = "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"";
-unsigned char code TC_TCP_SENDTEXT[] = "AT+CIPSEND";		// ∑¢ÀÕæﬂÃÂ ˝æ›
-unsigned char code TC_TCP_CLOSE[] = "AT+CIPCLOSE";		// ÷˜∂Øπÿ±’¡¥Ω”
-unsigned char code TC_TCP_SHUT[] = "AT+CIPSHUT";			// πÿ±’GPRSÕ®–≈
+#define RX_LEN      60
+#define TX_LEN      400 
 
-
-unsigned char xdata r_datas[LENGTH] = {0};	 					// ª∫¥ÊMCU¥´»Îµƒ ˝æ›
-unsigned char xdata t_datas[LENGTH] = {0};	 					// ¥´µΩTCP∑˛ŒÒ∆˜µƒ ˝æ›
-unsigned int MAX=0;
-unsigned int index=0;								// ª∫¥Ê ˝◊ÈÀ˜“˝
-
-//--…˘√˜»´æ÷∫Ø ˝--//
-void UsartConfiguration();				// ¥Æø⁄≤Œ ˝≈‰
-void Delay10ms(unsigned int c);   		// ŒÛ≤Ó 0us		# ∏–æı“™*20 æÕ «1000msµ»”⁄20s
-void send_byte(unsigned char ch);		// ∑¢ÀÕ“ª∏ˆ◊÷Ω⁄ 
-void print_r_datas();						// µ˜ ‘”√£¨ ‰≥ˆr_datas ˝æ›
-void print_t_datas();						// µ˜ ‘”√£¨ ‰≥ˆt_datas ˝æ›
-void clean_r_datas();						// data1 ˝◊È«Â¡„
-
-void sim800l_connect();					// ◊‘  ”¶≤®Ãÿ¬ ¡¨Ω”SIM800Lƒ£øÈ
-void sim800l_set_runmode();				// …Ë÷√ƒ£øÈΩ” ’µΩ–¬∂Ã–≈÷±Ω”◊™∑¢÷¡MCU
-void sim800l_wait_sms();				// ¬÷—Ø∂Ã–≈
-
-void tcp();
-void tcp_1_checksim();
-void tcp_2_checknet();
-void tcp_3_checkreg();
-void tcp_4_checkgprs();
-void tcp_5_setapn();
-void tcp_6_getlink();
-void tcp_7_getip();
-void tcp_8_toserver();
-void tcp_9_sendtext();
-void tcp_10_close();
-void tcp_11_shut();
+char    code    CMD_AIRPLANE[]    =   "AT+CFUN=0\r\n";
+char    code    CMD_MOBILE[]      =   "AT+CFUN=1\r\n";
+char    code    CMD_AT[]          =   "AT\r\n";
+char    code    CMD_SIM[]         =   "AT+CPIN?\r\n";
+char    code    CMD_REG[]         =   "AT+CREG?\r\n";
+char    code    CMD_SIGNAL[]      =   "AT+CSQ\r\n";
+char    code    CMD_SHUT[]        =   "AT+CIPSHUT\r\n";
+char    code    CMD_SHUTGPRS[]    =   "AT+CGATT=0\r\n";
+char    code    CMD_CKSMS[]       =   "AT+CPMS?\r\n";
+char    code    CMD_GTSMS[]       =   "AT+CMGR=";
+char    code    CMD_DLSMS[]       =   "AT+CMGD=";
+char    code    CMD_APN[]         =   "AT+CSTT=\"CMNET\"\r\n";
+char    code    CMD_GPRS[]        =   "AT+CIICR\r\n";
+char    code    CMD_IP[]          =   "AT+CIFSR\r\n";
+char    code    CMD_SERVER[]      =   "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"\r\n";
+char    code    CMD_SEND[]        =   "AT+CIPSEND\r\n";
 
 
-/*******************************************************************************
-* ∫Ø  ˝ √˚         : main
-* ∫Ø ˝π¶ƒ‹		   : ÷˜∫Ø ˝
-*  ‰    »Î         : Œﬁ
-*  ‰    ≥ˆ         : Œﬁ
-*******************************************************************************/
+unsigned    char    data    RX_BUFFER[RX_LEN]   =   {0};
+unsigned    int     data    RX_INDEX            =   0; 
+unsigned    char    xdata   TX_BUFFER[TX_LEN]   =   {0};
+unsigned    int     data    TX_INDEX            =   0; 
+unsigned    int     CHANGE_BUFFER               =   0;
+unsigned    char    STATUS;
+unsigned    char    SMS_CNT[2] = {0};
+int i;
+
+void RUN();
+void SEND_BYTE(unsigned char c);
+void SEND_STRING(unsigned char *p);
+void CLEAN_RX_BUFFER();
+void CLEAN_TX_BUFFER();
+void Delay1ms(unsigned int i);
+void SERIAL();
+void UART();
+void DEBUG();
+
+
 
 void main()
 {
-	UsartConfiguration();
-
-	P0 = 0x01;	 // 0000 0001
-
-	SBUF = 's';
-
-	sim800l_connect();
-
-	clean_r_datas();
-
-	sim800l_set_runmode();
-
-	clean_r_datas();
-
-	sim800l_wait_sms();
-
-
-
-	send_byte('e');
-
-
-	while(1);		// µ˜ ‘”√£¨∑¿÷πÀ¿—≠ª∑ø¥≤ª≥ˆ¥˙¬Î≤Ó“Ï
-	
+    P0 = 0X00;
+    STATUS = START;
+    while(1)
+    {
+       RUN(); 
+    }
 }
 
 
-void send_byte(unsigned char ch)
+void RUN()
 {
-	while(TI!=1);
-	TI = 0;
-	SBUF = ch;
+    if(STATUS == START)
+    {
+        //  INIT();             ÂàùÂßãÂåñ‰∏≤Âè£Á≠âËÆæÁΩÆ
+        //  YES :   READY 
+        //  NO  :
+
+        UART();
+        STATUS = REARY;
+    }
+
+    else if(STATUS == AIRPLANE)
+    {
+        //  "AT+CFUN=0" ;        ÂºÄÂêØÈ£ûË°åÊ®°Âºè
+        //  YES :   MOBILE 
+        //  NO  :   Á°¨‰ª∂ÈáçÂêØ
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_AIRPLANE);
+        Delay1ms(100);  // 3s
+
+        p = strstr(RX_BUFFER,"OK");
+        if(p !=NULL)
+        {
+            STATUS = MOBILE;
+        }        
+    }
+
+    else if(STATUS == MOBILE)
+    {
+        //  "AT+CFUN=1" ;       ÂÖ≥Èó≠È£ûË°åÊ®°Âºè   
+        //  YES :   NEWSMS 
+        //  NO  :
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_MOBILE);
+        Delay1ms(30);   // 0.5s
+
+        p = strstr(RX_BUFFER,"OK");   // "+CPIN: READY"
+        if(p != NULL)
+        {
+            STATUS = REARY;
+        }
+    }
+
+    else if(STATUS == REARY)
+    {
+        //  "AT" ;              Â∞ùËØïÂíåÊ®°ÂùóÈÄö‰ø°
+        //  YES :   ONLINE 
+        //  NO  :
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_AT);
+        Delay1ms(30);
+
+        p = strstr(RX_BUFFER,"OK");
+        if(p != NULL)
+        {
+            CLEAN_RX_BUFFER();
+            STATUS = ONLINE;
+        }
+    }
+
+    else if(STATUS == ONLINE)
+    {
+        //  "AT+CPIN?";         Ê£ÄÊü•SIMÁä∂ÊÄÅ
+        //  YES :   SIM 
+        //  NO  :   i > 20  AIRPLANE
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        if(i >= 20)
+        {
+            STATUS = AIRPLANE;
+            i=0;
+        }
+        else
+        {
+            SEND_STRING(CMD_SIM);
+            Delay1ms(30);   // 1s
+
+            p = strstr(RX_BUFFER,"+CPIN: READY");
+            if(p != NULL)
+            {
+                STATUS = SIM;
+                i=0;
+            }
+            else
+            {
+                i++;
+            }
+        }
+    }
+
+    else if(STATUS == SIM)
+    {
+        //  "AT+CREG"           Ê£ÄÊü•ÊòØÂê¶Ê≥®ÂÜåÂà∞ÂÆ∂Â∫≠ÁΩëÁªú(0,1)ÊàñÊº´Ê∏∏ÁΩëÁªú(0,5)
+        //  YES :   REG 
+        //  NO  :   i > 50  AIRPLANE 
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        if(i > 50)
+        {
+            STATUS = AIRPLANE;
+            i=0;
+        }
+        else
+        { 
+            SEND_STRING(CMD_REG);
+            Delay1ms(30);   // 0.5s
+
+            p = strstr(RX_BUFFER,"1");
+            if(p != NULL)
+            {
+                STATUS = REG;
+                i=0;
+            }
+            else
+            {
+                p = strstr(RX_BUFFER,"5");
+                if(p != NULL)
+                {
+                    STATUS = REG;
+                    i=0;
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+    }
+
+    else if(STATUS == REG)
+    {
+        //  "AT+CSQ"            Ê£ÄÊü•ÁΩëÁªúË¥®Èáè(0-31)
+        //  YES :   SIGNAL 
+        //  NO  :   i > 50  AIRPLANE
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        if(i > 50)
+        {
+            STATUS = AIRPLANE;
+            i=0;
+        }
+        else
+        {
+            SEND_STRING(CMD_SIGNAL);
+            Delay1ms(30);
+
+            // if(RX_BUFFER[6] > '0')
+            // {
+
+            //     CLEAN_RX_BUFFER();
+            //     STATUS = SIGNAL;
+            //     i=0;
+            // }
+            // else if(RX_BUFFER[7] > '0')
+            // {
+
+            //     CLEAN_RX_BUFFER();
+            //     STATUS = SIGNAL;
+            //     i=0;
+            // }
+            // else
+            // {
+            //     i++;
+            //     CLEAN_RX_BUFFER();
+            // }
+
+            p = strstr(RX_BUFFER,"OK");
+            if(p != NULL)
+            {
+                STATUS = SIGNAL;
+            }
+            else
+            {
+                i++;
+            }
+        }
+        
+        // p = strstr(RX_BUFFER,"OK");
+        // if(p != NULL)
+        // {
+        //     STATUS = SIGNAL;
+        //     CLEAN_RX_BUFFER();
+        // }
+    }
+
+    else if(STATUS == SIGNAL)
+    {
+        //  "AT+CMPS?"           Ê£ÄÊü•ÊúâÊ≤°ÊúâÊñ∞Áü≠‰ø°
+        //  YES :   NEWSMS 
+        //  NO  :   i > 20  READY
+        unsigned char *p;
+        unsigned char *g;
+        int k;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        P0 = 0X80;
+
+        if( i >= 50)
+        {
+            STATUS = REARY;
+            i=0;
+        }
+        else
+        {
+            SEND_STRING(CMD_CKSMS);
+            Delay1ms(30);
+
+            g = strstr(RX_BUFFER,"SM_P");
+            if(g != NULL)
+            {
+                g +=6;
+                SMS_CNT[0] = *g++;
+                SMS_CNT[1]  = *g;
+
+                if(SMS_CNT[1] == ',')
+                {
+                    SMS_CNT[1] = '\0';
+                }
+                // if(*g >= '0' && *g <= '9');
+                // {
+                //     SMS_CNT[1]  =  *g;
+                // }
+            }
+            if(SMS_CNT[0] > '0')
+            {
+                if(SMS_CNT[0] <= '9')
+                {
+
+                    // SEND_BYTE(SMS_CNT[0]);
+                    // SEND_BYTE(SMS_CNT[0]);
+                    // SEND_BYTE(SMS_CNT[0]);
+                    // SEND_BYTE(SMS_CNT[0]);
+                    // SEND_BYTE(SMS_CNT[0]);
+                    // SEND_BYTE(SMS_CNT[1]);
+                    // SEND_BYTE(SMS_CNT[1]);
+                    // SEND_BYTE(SMS_CNT[1]);
+                    // SEND_BYTE(SMS_CNT[1]);
+                    // SEND_BYTE(SMS_CNT[1]);
+                
+
+                    CHANGE_BUFFER = 1;
+
+                    TX_INDEX = 0;
+
+                    SEND_STRING(CMD_GTSMS);
+
+                    for(k = 0; k < strlen(SMS_CNT); k++)
+                        {
+                            SEND_BYTE(SMS_CNT[k]);
+                        }
+                    
+                    // ÈÅçÂéÜÁü≠‰ø°ÔºåËÄóÊÄßËÉΩ
+                
+                    // for(l = 50;l > 0; l--)
+                    // {
+                    //     SEND_STRING(CMD_GTSMS);
+                    //     SEND_BYTE(l);
+                    //     SEND_BYTE(0X0D);
+                    //     SEND_BYTE(0X0A);
+                    //     if(strlen(TX_BUFFER) >= 36)
+                    //     {
+                    //         SMS_INDEX = l;
+                    //         break;
+                    //     }
+                    // }
+                    
+                    SEND_BYTE(0X0D);
+                    SEND_BYTE(0X0A);
+                    
+                    Delay1ms(50);
+                    CHANGE_BUFFER = 0;
+                    
+
+                    p = strstr(TX_BUFFER,"+CM"); // "+CMGR:"
+                    if(p != NULL)
+                    {
+                        // strcpy(TX_BUFFER,RX_BUFFER);
+                        // SEND_STRING(RX_BUFFER);
+                        // Delay1ms(5);
+                        // CLEAN_RX_BUFFER();
+                        // SEND_BYTE(0X31);
+                        // SEND_BYTE(0X31);
+                        // SEND_BYTE(0X31);
+                        // SEND_BYTE(0X31);
+                        // SEND_BYTE(0X31);
+                        // DEBUG();
+                        // SEND_STRING(TX_BUFFER);
+
+                        TX_INDEX = 0;   // ÈáçÁΩÆÁ¥¢ÂºïÔºå‰øùËØÅÂèëÂá∫ÂéªÁöÑÊï∞ÊçÆÂ∫èÂàóÊ≠£Á°Æ
+                        STATUS = NEWSMS;
+                        i=0;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }      
+            }
+            else
+            {
+                i++;
+            }
+        }
+        P0 = 0X00;
+    }
+
+    else if(STATUS == SHUT)
+    {
+        //  "AT+CIPSHUT"             ÂÖ≥Èó≠ÁßªÂä®Âú∫ÊôØ
+        //  YES :   SIGNAL 
+        //  NO  :   AIRPLANE
+        unsigned char *p;
+        
+        // SEND_STRING(CMD_SHUTGPRS);
+        // Delay1ms(5);
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_SHUT);
+        Delay1ms(30);
+
+        p = strstr(RX_BUFFER,"SHUT OK");
+        if(p != NULL)
+        {
+            STATUS = SIGNAL;
+        }
+        else
+        {
+            STATUS = AIRPLANE;
+        }      
+    }
+
+    else if(STATUS == NEWSMS)
+    {
+        //  "AT+CSTT=\"CMNET\""         ËÆæÁΩÆCMNET
+        //  YES :   APN 
+        //  NO  :   SHUT
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_APN);
+        Delay1ms(50);
+
+        p = strstr(RX_BUFFER,"OK");
+        if(p != NULL)
+        {
+            STATUS = APN;
+        }
+        else
+        {
+            STATUS = SHUT;
+        }       
+    }
+
+    else if(STATUS == APN)
+    {
+        //  "AT+CIICR"                  ÂºÄÂêØGPRS
+        //  YES :   GPRS 
+        //  NO  :   SHUT
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_GPRS);
+        Delay1ms(50);
+
+        p = strstr(RX_BUFFER,"OK");
+        if(p != NULL)
+        {
+            STATUS = GPRS;
+        }
+        else
+        {
+            STATUS = SHUT;
+        }        
+    }
+
+    else if(STATUS == GPRS)
+    {
+        //  "AT+CIFSR"                  Êü•ËØ¢Ëé∑ÂèñÁöÑIP
+        //  YES :   IP 
+        //  NO  :   SHUT
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_IP);
+        Delay1ms(30);
+
+        p = strstr(RX_BUFFER,".");
+        if(p != NULL)
+        {
+            STATUS = IP;
+        }
+    }
+
+    else if(STATUS == IP)
+    {
+        //  "AT+CIPSTART=\"TCP\",\"8.8.8.8\",\"443\""       ËøûÊé•ËøúÁ®ãÊúçÂä°Âô® 
+        //  YES :   SERVER 
+        //  NO  :   SHUT
+        unsigned char *p;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        SEND_STRING(CMD_SERVER);
+        Delay1ms(50);
+
+        p = strstr(RX_BUFFER,"CONNECT OK");
+        if(p != NULL)
+        {
+            STATUS = SERVER;
+        }
+        else
+        {
+            STATUS = SHUT;
+        }
+    }
+
+    else if(STATUS == SERVER)
+    {
+        //  "AT+CIPSEND"                ÂèëÈÄÅÁü≠‰ø° 
+        //  YES :   SIGNAL 
+        //  NO  :   SERVER  i > 2 SHUT
+        unsigned char *p;
+        unsigned char *g;
+        int j;
+        int k;
+
+        CLEAN_RX_BUFFER();
+        Delay1ms(30);
+
+        if(i > 2)
+        {
+            STATUS = SHUT;
+            i=0;
+        }
+        else
+        {
+            SEND_STRING(CMD_SEND);
+            Delay1ms(30);
+
+            p = strstr(RX_BUFFER,">");
+            if(p != NULL)
+            {
+                CLEAN_RX_BUFFER();
+                Delay1ms(30);
+
+                for(j = 0;j < strlen(TX_BUFFER); j++)
+                {
+                    SEND_BYTE(TX_BUFFER[j]);
+                }
+                SEND_BYTE(0X1A);
+                Delay1ms(30); //Âª∂ËøüÂ§™‰ΩéÂ∞±Êî∂‰∏çÂà∞ÂèçÈ¶à
+
+                g = strstr(RX_BUFFER,"SEND OK");  //  "SEND OK"
+                if(g != NULL)
+                {
+
+                    SEND_STRING(CMD_DLSMS);
+
+                    for(k = 0; k < strlen(SMS_CNT); k++)
+                    {
+                        SEND_BYTE(SMS_CNT[k]);
+                    }
+
+                    SEND_BYTE(0X0D);
+                    SEND_BYTE(0X0A);
+
+                    CLEAN_TX_BUFFER();
+                    STATUS = SHUT;
+                    i=0;
+
+                }
+                else
+                {
+                    i++;
+                }
+                DEBUG();            
+            }
+            else
+            {
+                i++;
+            }            
+        }        
+    }
+}
+
+//  1.ÂèëÈÄÅ AT ÂíåÊ®°ÂùóÈÄö‰ø°
+//  2.ÂèëÈÄÅ AT+CPIN? Ê£ÄÊµãSIMÂç°Áä∂ÊÄÅ
+//  3.ÂèëÈÄÅ AT+CREG? Êü•ËØ¢ÂÖ•ÁΩëÊÉÖÂÜµ
+//  3.ÂèëÈÄÅ AT+CSQ Êü•ËØ¢‰ø°Âè∑Ë¥®Èáè
+//  4.ÂèëÈÄÅ AT+CGATT? Êü•ËØ¢GPRSÈôÑÁùÄÊÉÖÂÜµ
+
+
+//  5.ÂèëÈÄÅ AT+CIPSHUT ÂÖ≥Èó≠ÁßªÂä®Âú∫ÊôØ
+//  6.ÂèëÈÄÅ AT+CSTT="CMNET" ËÆæÁΩÆAPN
+//  7.ÂèëÈÄÅ AT+CIICR ÊøÄÊ¥ªÁßªÂä®Âú∫ÊôØ
+//  8.ÂèëÈÄÅ AT+CIFSR Êü•ËØ¢IPÂú∞ÂùÄ
+//  9.ÂèëÈÄÅ AT+CIPSTART="TCP","193.112.94.54","9001" ËøûÊé•ÊúçÂä°Âô®
+// 10.ÂèëÈÄÅ AT+CIPSEND Êî∂Âà∞'>'ÂêéÔºåÂèëÈÄÅÊï∞ÊçÆ
+// 11.ÂèëÈÄÅ AT+CIPCLOSE ÂÖ≥Èó≠ËøûÊé•
+// 12.ÂèëÈÄÅ AT+CIPSHUT ÂÖ≥Èó≠ÁßªÂä®Âú∫ÊôØ
+
+
+void SEND_BYTE(unsigned char c)
+{
+    while(!TI);
+    TI = 0;
+    SBUF = c;
 }
 
 
-
-void print_r_datas()
+void SEND_STRING(unsigned char *p)
 {
-	int i;
-	for(i = 0; i < strlen(r_datas); i++)
+    while(*p != '\0')
+    {
+        SEND_BYTE(*p++);
+    }
+}
+
+void CLEAN_RX_BUFFER()
+{
+    memset(RX_BUFFER,0,sizeof(RX_BUFFER));
+    RX_INDEX = 0;
+}
+
+void CLEAN_TX_BUFFER()
+{
+    memset(TX_BUFFER,0,sizeof(TX_BUFFER));
+    TX_INDEX = 0;
+}
+
+//  50  ÊÑüËßâÊòØ1s
+//  100 ÊÑüËßâÊòØ3s
+//  200 ÊÑüËßâÊòØ7s
+//  500 ÊÑüËßâÊòØ17s
+void Delay1ms(unsigned int i)
+{
+ 	unsigned int j;
+	while(i--)
 	{
-		send_byte(r_datas[i]);	
+	 	for(j = 0; j < 125; j++);
 	}
 }
 
-void print_t_datas()
+void SERIAL() interrupt 4
 {
-	int i;
-	for(i = 0; i < strlen(t_datas); i++)
-	{
-		send_byte(t_datas[i]);	
-	}
+    if(RI)
+    {
+        if(!CHANGE_BUFFER)
+        {
+            RI = 0;
+            RX_BUFFER[RX_INDEX++] = SBUF;
+
+            if(RX_INDEX >= RX_LEN - 1)
+            {
+                RX_INDEX = 0;
+            }
+        }
+        else
+        {
+            RI = 0;
+            TX_BUFFER[TX_INDEX++] = SBUF;
+
+            if(TX_INDEX >= TX_LEN - 1)
+            {
+                TX_INDEX = 0;
+            }
+        }
+        
+    }
 }
 
-void clean_r_datas()
+void UART()
 {
-	memset(r_datas,0,sizeof(r_datas));
-	index = 0;
+    SCON = 0X52;
+    PCON = 0X80;
+    TMOD = 0X20;
+    TH1  = 0XFD;
+    TR1  = 0XFD;
+
+    ES   = 1;
+    EA   = 1;
+    TR1  = 1;
 }
 
-
-void sim800l_connect()
+void DEBUG()
 {
-	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_CONNECT)-1; i++)
-		{
-			send_byte(TC_CONNECT[i]);	
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(1);
-
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			break;
-		}
-	}
-}
-
-
-void sim800l_set_runmode()
-{
-	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_RUNMODE)-1; i++)
-	 	{
-			send_byte(TC_RUNMODE[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(1);
-
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			break;
-
-		}
-	}
-}
-
-
-void sim800l_wait_sms()
-{
-	char *p;
-	while(1)
-	{
-	 	// do sms;
-		P0 = 0x02;	 // 0000 0010
-
-		send_byte(0x57);		// W
-		send_byte(0x41);		// A
-		send_byte(0x49);		// I
-		send_byte(0x54); 		// T
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(10);
-		
-		// ’‚∏ˆ—”≥Ÿ ±º‰±ÿ–Î◊„πª£¨≤ª»ª¥Æø⁄ ’µΩµƒ ˝æ›£®∂Ã–≈£©≤ªÕÍ’˚
-		// ∏¯¥Æø⁄÷–∂œ◊„πªµƒ ±º‰»•Ω” ’ ˝æ›∑≈»Î ˝◊È
-		p = strstr(r_datas,"CMT");
-		if(p != NULL)
-		{
-			P0 = 0xa5;	 // 1010 0101
-//			send_byte(0x53);   // S
-//			print_r_datas();
-//			send_byte(0x53);
-
-			// Ω´ ’µΩµƒ ˝æ›ª∫¥Ê
-			strcpy(t_datas,r_datas);
-
-			// «Âø’Ω” ’ª∫¥Ê ˝◊È
-			clean_r_datas();
-
-			// ∂Ã–≈∑¢ÀÕµΩTCP∑˛ŒÒ∆˜
-			tcp();
-
-			P0 = 0x0f;	 // 0000 1111
-
-
-		}
-		clean_r_datas();
-	}
-
-}
-
-void tcp()
-{
-	tcp_1_checksim();
-	clean_r_datas();
-
-	tcp_2_checknet();
-	clean_r_datas();
-	tcp_3_checkreg();
-	clean_r_datas();
-
-	tcp_4_checkgprs();
-	clean_r_datas();
-
-	tcp_5_setapn();
-	clean_r_datas();
-
-	tcp_6_getlink();
-	clean_r_datas();
-
-	tcp_7_getip();
-	clean_r_datas();
-
-	tcp_8_toserver();
-//	clean_r_datas();   // ∑µªÿµƒ «CONNETC OK£¨∂‘œ¬“ª≤Ω≈–∂œ√ª”–”∞œÏ£¨ø…“‘≤ª”√«Âø’£¨Ã·∏ﬂ‘À––ÀŸ∂»
-
-	tcp_9_sendtext();
-//	clean_r_datas();	// ∫Û√ÊŒﬁ≈–∂œ£¨◊¢ ÕµÙÃ·∏ﬂ‘À––ÀŸ∂»
-
-	tcp_10_close();
-//	clean_r_datas();   	// ∫Û√ÊŒﬁ≈–∂œ£¨◊¢ ÕµÙÃ·∏ﬂ‘À––ÀŸ∂»
-
-	tcp_11_shut();
-	clean_r_datas();
-
-}
-
-void tcp_1_checksim()
-{
- 	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKSIM)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKSIM[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-	 	//’˝»∑∑µªÿ£∫
-		//+CPIN: READY
-
-		//OK
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			P0 = 0x04;	 // 0000 0100
-
-			break;
-		}
-	}
-
-}
-
-void tcp_2_checknet()
-{
- 	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKNET)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKNET[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		//’˝»∑∑µªÿ£∫
-		//+CSQ: 20,0
-
-		//OK
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			P0 = 0x08;	 // 0000 1000
-
-			break;
-		}
-	}
-
-}
-
-void tcp_3_checkreg()
-{
- 	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKREG)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKREG[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		//’˝»∑∑µªÿ£∫
-		//+CREG: 0,1
-
-		//OK
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			P0 = 0x10;	 // 0001 0000
-
-			break;
-		}
-	}
-
-}
-
-void tcp_4_checkgprs()
-{
- 	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_CHECKGPRS)-1; i++)
-	 	{
-			send_byte(TC_TCP_CHECKGPRS[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		//’˝»∑∑µªÿ£∫
-		//+CGATT: 1
-
-		//OK
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-			P0 = 0x20;	 // 0010 0000
-
-			break;
-		}
-	}
-
-}
-
-void tcp_5_setapn()
-{
- 	int i;
-//	unsigned char *p;
-
-//	while(1)   // …Ë÷√≥¨π˝“ª¥ŒæÕª·¥ÌŒÛ
-//	{
-		for(i = 0; i < sizeof(TC_TCP_SETAPN)-1; i++)
-	 	{
-			send_byte(TC_TCP_SETAPN[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		P0 = 0x40;	 // 0100 0000
-
-
-		//’˝»∑∑µªÿ
-		//OK
-//		p = strstr(r_datas,"OK");
-//		if(p != NULL)
-//		{
-//			break;
-//		}
-//	}
-
-}
-
-void tcp_6_getlink()
-{
- 	int i;
-//	unsigned char *p;
-
-//	while(1)  // …Ë÷√≥¨π˝“ª¥ŒæÕª·¥ÌŒÛ
-//	{
-		for(i = 0; i < sizeof(TC_TCP_GETLINK)-1; i++)
-	 	{
-			send_byte(TC_TCP_GETLINK[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		P0 = 0x80;	 // 1000 0000
-
-
-		//’˝»∑∑µªÿ
-		//OK
-//		p = strstr(r_datas,"OK");
-//		if(p != NULL)
-//		{
-//			break;
-//		}
-//	}
-
-}
-
-void tcp_7_getip()
-{
- 	int i;
-//	unsigned char *p;
-
-//	while(1)  
-//	{
-		for(i = 0; i < sizeof(TC_TCP_GETIP)-1; i++)
-	 	{
-			send_byte(TC_TCP_GETIP[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-
-		P0 = 0x03;	 // 0000 0011
-
-
-		//’˝»∑∑µªÿ£∫
-		//10.42.6.249
-//		p = strstr(r_datas,".");
-//		if(p != NULL)
-//		{
-//			break;
-//		}
-//	}
-
-}
-
-void tcp_8_toserver()
-{
- 	int i;
-	unsigned char *p;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_TOSERVER)-1; i++)
-	 	{
-			send_byte(TC_TCP_TOSERVER[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(10);
-
-		P0 = 0x0c;	 // 0000 1100
-
-//		send_byte(0x30); // 0
-//		send_byte(0x0d);
-//		send_byte(0x0a);
-//		print_r_datas();
-//		send_byte(0x0d);
-//		send_byte(0x0a);
-//		send_byte(0x30); // 0
-
-
-		//’˝»∑∑µªÿ£∫
-		//OK
-
-		//CONNECT OK
-		p = strstr(r_datas,"CONNECT OK");
-		if(p != NULL)
-		{
-			break;
-		}
-	}
-
-}
-
-void tcp_9_sendtext()
-{
- 	int i;
-	unsigned char *p;
-	unsigned char *g;
-	int j;
-
-	while(1)
-	{
-		for(i = 0; i < sizeof(TC_TCP_SENDTEXT)-1; i++)
-	 	{
-			send_byte(TC_TCP_SENDTEXT[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5); // ‘⁄µ˜ ‘µƒ ±∫Ú–Ë“™∞——”≥Ÿº”¥Û£¨∑˛ŒÒ∆˜œÚ¥Æø⁄∑¢ÀÕ'>'◊÷∑˚¥Æ£¨≤≈ª·œÚTCP∑˛ŒÒ∆˜∑¢ÀÕ ˝æ›
-						// ¡¨Ω”ƒ£øÈµƒ ±∫Úø…“‘  µ±µ˜–°
-		P0 = 0x30;	 // 0011 0000
-
-		//	’˝»∑∑µªÿ£∫
-		//	>
-
-		//	»ª∫Û ‰»Îƒ⁄»›
-		//  ◊Ó∫Û ‰»ÎΩ· ¯∑˚£∫1A
-
-		//	∑¢ÀÕ≥…π¶∑µªÿ£∫
-		//	SEND OK
-		//
-		//	CLOSED
-
-		p = strstr(r_datas,">");
-		if(p != NULL)
-		{
-			break;							  
-		}
-	}
-
-	while(1)
-	{
-		for(j = 16;j < strlen(t_datas); j++)	 // Ã¯π˝∂Ã–≈«∞√ÊµƒŒﬁ–ß◊÷∑˚¥”≥§∂»ø™ º∑¢
-		{
-			send_byte(t_datas[j]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		send_byte(0x1a);
-		
-//		Delay10ms(10);		// ’‚¿Ô≤ªƒ‹—”≥Ÿ°£—”≥Ÿª·µº÷¬ ’≤ªµΩSEND OK–≈∫≈£¨‘≠“Ú≤ª√˜	
-	   	
-		send_byte(0x3e);	// '>'
-		P0 = 0xc0;	 // 1100 0000
-
-	
-		g = strstr(r_datas,"SEND OK");
-		if(g != NULL)
-		{
-			P0 = 0xe0;	 // 1110 0000
-
-			// «Âø’t_datas
-			memset(t_datas,0,sizeof(t_datas));
-			break;
-		}
-	}
-}
-
-void tcp_10_close()
-{
- 	int i;
-	unsigned char *p;
-
-//	while(1)
-//	{
-		for(i = 0; i < sizeof(TC_TCP_CLOSE)-1; i++)
-	 	{
-			send_byte(TC_TCP_CLOSE[i]);
-		}
-		send_byte(0x0d);
-		send_byte(0x0a);
-		Delay10ms(5);
-
-		P0 = 0x07;	 // 0000 0111
-
-		// ∑¢ÀÕ≥…π¶∑µªÿµƒ «◊÷∑˚¥Æ "CLOSE OK"
-		p = strstr(r_datas,"OK");
-		if(p != NULL)
-		{
-//			break;
-		}
-//	}
-
-}
-
-void tcp_11_shut()
-{
-	int i;
-	unsigned char *p;
-	
-	for(i = 0; i < sizeof(TC_TCP_SHUT)-1; i++)
-	{
-		send_byte(TC_TCP_SHUT[i]);
-	}
-	send_byte(0x0d);
-	send_byte(0x0a);
-	Delay10ms(5);	
-
-	p = strstr(r_datas,"SHUT OK");
-
-	if(p != NULL)
-	{
-		//do something
-	}
-
-	P0 = 0x38;	 // 0011 1000
-
-}
-
-
-
-
-void serial() interrupt 4
-{
- 	if(RI == 1)
-	{
-		RI = 0;
-//		index = 0;
-		r_datas[index++] = SBUF;
-		if(index > MAX)
-		{
-			MAX = index;
-		}
-		if(index > sizeof(r_datas))
-		{
-			index = 0;
-		}
-
-	}
-}
-
-
-
-void UsartConfiguration()
-{
-	SCON=0X50;			//…Ë÷√Œ™π§◊˜∑Ω Ω1
-	TMOD=0X20;			//…Ë÷√º∆ ˝∆˜π§◊˜∑Ω Ω2
-	PCON=0X80;			//≤®Ãÿ¬ º”±∂
-	TH1=0XF3;		    //º∆ ˝∆˜≥ı º÷µ…Ë÷√£¨◊¢“‚≤®Ãÿ¬  «4800µƒ
-	TL1=0XF3;
-	ES=1;						//¥Úø™Ω” ’÷–∂œ
-	EA=1;						//¥Úø™◊‹÷–∂œ
-	TR1=1;					    //¥Úø™º∆ ˝∆˜
-}
-
-
-void Delay10ms(unsigned int c)   //ŒÛ≤Ó 0us
-{
-    unsigned char a, b;
-
-	//--c“—æ≠‘⁄¥´µ›π˝¿¥µƒ ±∫Ú“—æ≠∏≥÷µ¡À£¨À˘“‘‘⁄for”Ôæ‰µ⁄“ªæ‰æÕ≤ª”√∏≥÷µ¡À--//
-    for (;c>0;c--)
-	{
-		for (b=38;b>0;b--)
-		{
-			for (a=130;a>0;a--);
-		}          
-	}       
+    Delay1ms(100);
+
+    SEND_BYTE('D');
+    SEND_BYTE('E');
+    SEND_BYTE('B');
+    SEND_BYTE('U');
+    SEND_BYTE('G');
+    SEND_BYTE(':');
+
+    SEND_STRING(RX_BUFFER);
+
+    SEND_BYTE(':');
+    SEND_BYTE('D');
+    SEND_BYTE('E');
+    SEND_BYTE('B');
+    SEND_BYTE('U');
+    SEND_BYTE('G');
+
+    Delay1ms(100);
 }
