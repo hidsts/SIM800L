@@ -19,6 +19,7 @@
 
 #define RX_LEN      60
 #define TX_LEN      400 
+#define TOCHAR(x) (x + '0')
 
 char    code    CMD_AIRPLANE[]    =   "AT+CFUN=0\r\n";
 char    code    CMD_MOBILE[]      =   "AT+CFUN=1\r\n";
@@ -36,7 +37,6 @@ char    code    CMD_GPRS[]        =   "AT+CIICR\r\n";
 char    code    CMD_IP[]          =   "AT+CIFSR\r\n";
 char    code    CMD_SERVER[]      =   "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"\r\n";
 char    code    CMD_SEND[]        =   "AT+CIPSEND\r\n";
-
 
 unsigned    char    data    RX_BUFFER[RX_LEN]   =   {0};
 unsigned    int     data    RX_INDEX            =   0; 
@@ -56,6 +56,7 @@ void Delay1ms(unsigned int i);
 void SERIAL();
 void UART();
 void DEBUG();
+void FORMAT_TX_BUFFER();
 
 
 
@@ -126,7 +127,7 @@ void RUN()
     {
         //  "AT" ;              尝试和模块通信
         //  YES :   ONLINE 
-        //  NO  :
+        //  NO  :   重启模块
         unsigned char *p;
 
         CLEAN_RX_BUFFER();
@@ -284,6 +285,7 @@ void RUN()
         //  NO  :   i > 20  READY
         unsigned char *p;
         unsigned char *g;
+        char temp;
         int k;
 
         CLEAN_RX_BUFFER();
@@ -305,92 +307,71 @@ void RUN()
             if(g != NULL)
             {
                 g +=6;
-                SMS_CNT[0] = *g++;
-                SMS_CNT[1]  = *g;
+                temp = *g;
+                // g +=6;
+                // SMS_CNT[0] = *g++;
+                // SMS_CNT[1]  = *g;
 
-                if(SMS_CNT[1] == ',')
-                {
-                    SMS_CNT[1] = '\0';
-                }
+                // if(SMS_CNT[1] == ',')
+                // {
+                //     SMS_CNT[1] = '\0';
+                // }
                 // if(*g >= '0' && *g <= '9');
                 // {
                 //     SMS_CNT[1]  =  *g;
                 // }
             }
-            if(SMS_CNT[0] > '0')
+            // if(SMS_CNT[0] > '0')
+            if(temp > '0')
             {
-                if(SMS_CNT[0] <= '9')
+                for(k = 1; k <= 50; k++)
                 {
-
-                    // SEND_BYTE(SMS_CNT[0]);
-                    // SEND_BYTE(SMS_CNT[0]);
-                    // SEND_BYTE(SMS_CNT[0]);
-                    // SEND_BYTE(SMS_CNT[0]);
-                    // SEND_BYTE(SMS_CNT[0]);
-                    // SEND_BYTE(SMS_CNT[1]);
-                    // SEND_BYTE(SMS_CNT[1]);
-                    // SEND_BYTE(SMS_CNT[1]);
-                    // SEND_BYTE(SMS_CNT[1]);
-                    // SEND_BYTE(SMS_CNT[1]);
-                
+                    CLEAN_TX_BUFFER();
+                    Delay1ms(30);
 
                     CHANGE_BUFFER = 1;
-
-                    TX_INDEX = 0;
+                    // TX_INDEX = 0;
 
                     SEND_STRING(CMD_GTSMS);
-
-                    for(k = 0; k < strlen(SMS_CNT); k++)
-                        {
-                            SEND_BYTE(SMS_CNT[k]);
-                        }
-                    
-                    // 遍历短信，耗性能
-                
-                    // for(l = 50;l > 0; l--)
-                    // {
-                    //     SEND_STRING(CMD_GTSMS);
-                    //     SEND_BYTE(l);
-                    //     SEND_BYTE(0X0D);
-                    //     SEND_BYTE(0X0A);
-                    //     if(strlen(TX_BUFFER) >= 36)
-                    //     {
-                    //         SMS_INDEX = l;
-                    //         break;
-                    //     }
-                    // }
-                    
+                    if(k >= 10)
+                    {
+                        SEND_BYTE(TOCHAR(k/10));
+                        SEND_BYTE(TOCHAR(k%10));
+                    }else
+                    {
+                        SEND_BYTE(TOCHAR(k));
+                    }
                     SEND_BYTE(0X0D);
                     SEND_BYTE(0X0A);
-                    
+
                     Delay1ms(50);
                     CHANGE_BUFFER = 0;
-                    
 
-                    p = strstr(TX_BUFFER,"+CM"); // "+CMGR:"
-                    if(p != NULL)
+                    if(strlen(TX_BUFFER) >= 36)
                     {
-                        // strcpy(TX_BUFFER,RX_BUFFER);
-                        // SEND_STRING(RX_BUFFER);
-                        // Delay1ms(5);
-                        // CLEAN_RX_BUFFER();
-                        // SEND_BYTE(0X31);
-                        // SEND_BYTE(0X31);
-                        // SEND_BYTE(0X31);
-                        // SEND_BYTE(0X31);
-                        // SEND_BYTE(0X31);
-                        // DEBUG();
-                        // SEND_STRING(TX_BUFFER);
+                        p = strstr(TX_BUFFER,"+CM");
+                        if(p != NULL)
+                        {
+                            if(k >= 10)
+                            {
+                                SMS_CNT[0] = TOCHAR(k/10);
+                                SMS_CNT[1] = TOCHAR(k%10);
+                            }else
+                            {
+                                SMS_CNT[0] = TOCHAR(k);
+                                SMS_CNT[1] = '\0';
+                            }			
+                            STATUS = NEWSMS;
+                            TX_INDEX = 0;
+                            i = 0;
+                            FORMAT_TX_BUFFER();
+                            Delay1ms(30);
 
-                        TX_INDEX = 0;   // 重置索引，保证发出去的数据序列正确
-                        STATUS = NEWSMS;
-                        i=0;
+                            break;
+                        }
                     }
-                    else
-                    {
-                        i++;
-                    }
-                }      
+                    // DEBUG();
+                }
             }
             else
             {
@@ -544,8 +525,8 @@ void RUN()
             p = strstr(RX_BUFFER,">");
             if(p != NULL)
             {
-                CLEAN_RX_BUFFER();
-                Delay1ms(30);
+                // CLEAN_RX_BUFFER();
+                // Delay1ms(30);
 
                 for(j = 0;j < strlen(TX_BUFFER); j++)
                 {
@@ -554,11 +535,12 @@ void RUN()
                 SEND_BYTE(0X1A);
                 Delay1ms(30); //延迟太低就收不到反馈
 
-                g = strstr(RX_BUFFER,"SEND OK");  //  "SEND OK"
+                g = strstr(RX_BUFFER,"OK");  //  "SEND OK"
                 if(g != NULL)
                 {
 
                     SEND_STRING(CMD_DLSMS);
+                    
 
                     for(k = 0; k < strlen(SMS_CNT); k++)
                     {
@@ -577,12 +559,12 @@ void RUN()
                 {
                     i++;
                 }
-                DEBUG();            
             }
             else
             {
                 i++;
-            }            
+            } 
+            DEBUG();           
         }        
     }
 }
@@ -630,6 +612,64 @@ void CLEAN_TX_BUFFER()
 {
     memset(TX_BUFFER,0,sizeof(TX_BUFFER));
     TX_INDEX = 0;
+}
+
+void FORMAT_TX_BUFFER()
+{
+    char *ps;
+    int i;
+
+    ps = strstr(TX_BUFFER,",\"\",");
+    if(ps != NULL)
+    {
+        ps += 7;
+        if(*ps == 0X0A)
+        {
+            ps += 1;
+            for(i = 0; *ps != '\0'; i++)
+            {
+                if(*ps == 0X20)
+                {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else if (*ps == 0X0D)
+                 {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else if (*ps == 0X0A)
+                 {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else
+                {
+                    TX_BUFFER[i] = *ps++;
+                }
+            }
+
+        }else if (*ps == 0X0D) 
+        {
+            ps += 2;
+            for(i = 0; *ps != '\0'; i++)
+            {
+                if(*ps == 0X20)
+                {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else if (*ps == 0X0D)
+                 {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else if (*ps == 0X0A)
+                 {
+                    TX_BUFFER[i] = '\0';
+                    break;
+                }else
+                {
+                    TX_BUFFER[i] = *ps++;
+                }
+            }
+        }        
+    }
 }
 
 //  50  感觉是1s

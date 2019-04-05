@@ -1,4 +1,4 @@
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 1   
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 1   
 
 
 C51 COMPILER V9.01, COMPILATION OF MODULE SIM800L
@@ -28,24 +28,24 @@ line level    source
   19          
   20          #define RX_LEN      60
   21          #define TX_LEN      400 
-  22          
-  23          char    code    CMD_AIRPLANE[]    =   "AT+CFUN=0\r\n";
-  24          char    code    CMD_MOBILE[]      =   "AT+CFUN=1\r\n";
-  25          char    code    CMD_AT[]          =   "AT\r\n";
-  26          char    code    CMD_SIM[]         =   "AT+CPIN?\r\n";
-  27          char    code    CMD_REG[]         =   "AT+CREG?\r\n";
-  28          char    code    CMD_SIGNAL[]      =   "AT+CSQ\r\n";
-  29          char    code    CMD_SHUT[]        =   "AT+CIPSHUT\r\n";
-  30          char    code    CMD_SHUTGPRS[]    =   "AT+CGATT=0\r\n";
-  31          char    code    CMD_CKSMS[]       =   "AT+CPMS?\r\n";
-  32          char    code    CMD_GTSMS[]       =   "AT+CMGR=";
-  33          char    code    CMD_DLSMS[]       =   "AT+CMGD=";
-  34          char    code    CMD_APN[]         =   "AT+CSTT=\"CMNET\"\r\n";
-  35          char    code    CMD_GPRS[]        =   "AT+CIICR\r\n";
-  36          char    code    CMD_IP[]          =   "AT+CIFSR\r\n";
-  37          char    code    CMD_SERVER[]      =   "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"\r\n";
-  38          char    code    CMD_SEND[]        =   "AT+CIPSEND\r\n";
-  39          
+  22          #define TOCHAR(x) (x + '0')
+  23          
+  24          char    code    CMD_AIRPLANE[]    =   "AT+CFUN=0\r\n";
+  25          char    code    CMD_MOBILE[]      =   "AT+CFUN=1\r\n";
+  26          char    code    CMD_AT[]          =   "AT\r\n";
+  27          char    code    CMD_SIM[]         =   "AT+CPIN?\r\n";
+  28          char    code    CMD_REG[]         =   "AT+CREG?\r\n";
+  29          char    code    CMD_SIGNAL[]      =   "AT+CSQ\r\n";
+  30          char    code    CMD_SHUT[]        =   "AT+CIPSHUT\r\n";
+  31          char    code    CMD_SHUTGPRS[]    =   "AT+CGATT=0\r\n";
+  32          char    code    CMD_CKSMS[]       =   "AT+CPMS?\r\n";
+  33          char    code    CMD_GTSMS[]       =   "AT+CMGR=";
+  34          char    code    CMD_DLSMS[]       =   "AT+CMGD=";
+  35          char    code    CMD_APN[]         =   "AT+CSTT=\"CMNET\"\r\n";
+  36          char    code    CMD_GPRS[]        =   "AT+CIICR\r\n";
+  37          char    code    CMD_IP[]          =   "AT+CIFSR\r\n";
+  38          char    code    CMD_SERVER[]      =   "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"\r\n";
+  39          char    code    CMD_SEND[]        =   "AT+CIPSEND\r\n";
   40          
   41          unsigned    char    data    RX_BUFFER[RX_LEN]   =   {0};
   42          unsigned    int     data    RX_INDEX            =   0; 
@@ -62,691 +62,733 @@ line level    source
   53          void CLEAN_RX_BUFFER();
   54          void CLEAN_TX_BUFFER();
   55          void Delay1ms(unsigned int i);
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 2   
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 2   
 
   56          void SERIAL();
   57          void UART();
   58          void DEBUG();
-  59          
+  59          void FORMAT_TX_BUFFER();
   60          
   61          
-  62          void main()
-  63          {
-  64   1          P0 = 0X00;
-  65   1          STATUS = START;
-  66   1          while(1)
-  67   1          {
-  68   2             RUN(); 
-  69   2          }
-  70   1      }
-  71          
+  62          
+  63          void main()
+  64          {
+  65   1          P0 = 0X00;
+  66   1          STATUS = START;
+  67   1          while(1)
+  68   1          {
+  69   2             RUN(); 
+  70   2          }
+  71   1      }
   72          
-  73          void RUN()
-  74          {
-  75   1          if(STATUS == START)
-  76   1          {
-  77   2              //  INIT();             初始化串口等设置
-  78   2              //  YES :   READY 
-  79   2              //  NO  :
-  80   2      
-  81   2              UART();
-  82   2              STATUS = REARY;
-  83   2          }
-  84   1      
-  85   1          else if(STATUS == AIRPLANE)
-  86   1          {
-  87   2              //  "AT+CFUN=0" ;        开启飞行模式
-  88   2              //  YES :   MOBILE 
-  89   2              //  NO  :   硬件重启
-  90   2              unsigned char *p;
-  91   2      
-  92   2              CLEAN_RX_BUFFER();
-  93   2              Delay1ms(30);
-  94   2      
-  95   2              SEND_STRING(CMD_AIRPLANE);
-  96   2              Delay1ms(100);  // 3s
-  97   2      
-  98   2              p = strstr(RX_BUFFER,"OK");
-  99   2              if(p !=NULL)
- 100   2              {
- 101   3                  STATUS = MOBILE;
- 102   3              }        
- 103   2          }
- 104   1      
- 105   1          else if(STATUS == MOBILE)
- 106   1          {
- 107   2              //  "AT+CFUN=1" ;       关闭飞行模式   
- 108   2              //  YES :   NEWSMS 
- 109   2              //  NO  :
- 110   2              unsigned char *p;
- 111   2      
- 112   2              CLEAN_RX_BUFFER();
- 113   2              Delay1ms(30);
- 114   2      
- 115   2              SEND_STRING(CMD_MOBILE);
- 116   2              Delay1ms(30);   // 0.5s
- 117   2      
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 3   
+  73          
+  74          void RUN()
+  75          {
+  76   1          if(STATUS == START)
+  77   1          {
+  78   2              //  INIT();             初始化串口等设置
+  79   2              //  YES :   READY 
+  80   2              //  NO  :
+  81   2      
+  82   2              UART();
+  83   2              STATUS = REARY;
+  84   2          }
+  85   1      
+  86   1          else if(STATUS == AIRPLANE)
+  87   1          {
+  88   2              //  "AT+CFUN=0" ;        开启飞行模式
+  89   2              //  YES :   MOBILE 
+  90   2              //  NO  :   硬件重启
+  91   2              unsigned char *p;
+  92   2      
+  93   2              CLEAN_RX_BUFFER();
+  94   2              Delay1ms(30);
+  95   2      
+  96   2              SEND_STRING(CMD_AIRPLANE);
+  97   2              Delay1ms(100);  // 3s
+  98   2      
+  99   2              p = strstr(RX_BUFFER,"OK");
+ 100   2              if(p !=NULL)
+ 101   2              {
+ 102   3                  STATUS = MOBILE;
+ 103   3              }        
+ 104   2          }
+ 105   1      
+ 106   1          else if(STATUS == MOBILE)
+ 107   1          {
+ 108   2              //  "AT+CFUN=1" ;       关闭飞行模式   
+ 109   2              //  YES :   NEWSMS 
+ 110   2              //  NO  :
+ 111   2              unsigned char *p;
+ 112   2      
+ 113   2              CLEAN_RX_BUFFER();
+ 114   2              Delay1ms(30);
+ 115   2      
+ 116   2              SEND_STRING(CMD_MOBILE);
+ 117   2              Delay1ms(30);   // 0.5s
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 3   
 
- 118   2              p = strstr(RX_BUFFER,"OK");   // "+CPIN: READY"
- 119   2              if(p != NULL)
- 120   2              {
- 121   3                  STATUS = REARY;
- 122   3              }
- 123   2          }
- 124   1      
- 125   1          else if(STATUS == REARY)
- 126   1          {
- 127   2              //  "AT" ;              尝试和模块通信
- 128   2              //  YES :   ONLINE 
- 129   2              //  NO  :
- 130   2              unsigned char *p;
- 131   2      
- 132   2              CLEAN_RX_BUFFER();
- 133   2              Delay1ms(30);
- 134   2      
- 135   2              SEND_STRING(CMD_AT);
- 136   2              Delay1ms(30);
- 137   2      
- 138   2              p = strstr(RX_BUFFER,"OK");
- 139   2              if(p != NULL)
- 140   2              {
- 141   3                  CLEAN_RX_BUFFER();
- 142   3                  STATUS = ONLINE;
- 143   3              }
- 144   2          }
- 145   1      
- 146   1          else if(STATUS == ONLINE)
- 147   1          {
- 148   2              //  "AT+CPIN?";         检查SIM状态
- 149   2              //  YES :   SIM 
- 150   2              //  NO  :   i > 20  AIRPLANE
- 151   2              unsigned char *p;
- 152   2      
- 153   2              CLEAN_RX_BUFFER();
- 154   2              Delay1ms(30);
- 155   2      
- 156   2              if(i >= 20)
- 157   2              {
- 158   3                  STATUS = AIRPLANE;
- 159   3                  i=0;
- 160   3              }
- 161   2              else
- 162   2              {
- 163   3                  SEND_STRING(CMD_SIM);
- 164   3                  Delay1ms(30);   // 1s
- 165   3      
- 166   3                  p = strstr(RX_BUFFER,"+CPIN: READY");
- 167   3                  if(p != NULL)
- 168   3                  {
- 169   4                      STATUS = SIM;
- 170   4                      i=0;
- 171   4                  }
- 172   3                  else
- 173   3                  {
- 174   4                      i++;
- 175   4                  }
- 176   3              }
- 177   2          }
- 178   1      
- 179   1          else if(STATUS == SIM)
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 4   
+ 118   2      
+ 119   2              p = strstr(RX_BUFFER,"OK");   // "+CPIN: READY"
+ 120   2              if(p != NULL)
+ 121   2              {
+ 122   3                  STATUS = REARY;
+ 123   3              }
+ 124   2          }
+ 125   1      
+ 126   1          else if(STATUS == REARY)
+ 127   1          {
+ 128   2              //  "AT" ;              尝试和模块通信
+ 129   2              //  YES :   ONLINE 
+ 130   2              //  NO  :   重启模块
+ 131   2              unsigned char *p;
+ 132   2      
+ 133   2              CLEAN_RX_BUFFER();
+ 134   2              Delay1ms(30);
+ 135   2      
+ 136   2              SEND_STRING(CMD_AT);
+ 137   2              Delay1ms(30);
+ 138   2      
+ 139   2              p = strstr(RX_BUFFER,"OK");
+ 140   2              if(p != NULL)
+ 141   2              {
+ 142   3                  CLEAN_RX_BUFFER();
+ 143   3                  STATUS = ONLINE;
+ 144   3              }
+ 145   2          }
+ 146   1      
+ 147   1          else if(STATUS == ONLINE)
+ 148   1          {
+ 149   2              //  "AT+CPIN?";         检查SIM状态
+ 150   2              //  YES :   SIM 
+ 151   2              //  NO  :   i > 20  AIRPLANE
+ 152   2              unsigned char *p;
+ 153   2      
+ 154   2              CLEAN_RX_BUFFER();
+ 155   2              Delay1ms(30);
+ 156   2      
+ 157   2              if(i >= 20)
+ 158   2              {
+ 159   3                  STATUS = AIRPLANE;
+ 160   3                  i=0;
+ 161   3              }
+ 162   2              else
+ 163   2              {
+ 164   3                  SEND_STRING(CMD_SIM);
+ 165   3                  Delay1ms(30);   // 1s
+ 166   3      
+ 167   3                  p = strstr(RX_BUFFER,"+CPIN: READY");
+ 168   3                  if(p != NULL)
+ 169   3                  {
+ 170   4                      STATUS = SIM;
+ 171   4                      i=0;
+ 172   4                  }
+ 173   3                  else
+ 174   3                  {
+ 175   4                      i++;
+ 176   4                  }
+ 177   3              }
+ 178   2          }
+ 179   1      
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 4   
 
- 180   1          {
- 181   2              //  "AT+CREG"           检查是否注册到家庭网络(0,1)或漫游网络(0,5)
- 182   2              //  YES :   REG 
- 183   2              //  NO  :   i > 50  AIRPLANE 
- 184   2              unsigned char *p;
- 185   2      
- 186   2              CLEAN_RX_BUFFER();
- 187   2              Delay1ms(30);
- 188   2      
- 189   2              if(i > 50)
- 190   2              {
- 191   3                  STATUS = AIRPLANE;
- 192   3                  i=0;
- 193   3              }
- 194   2              else
- 195   2              { 
- 196   3                  SEND_STRING(CMD_REG);
- 197   3                  Delay1ms(30);   // 0.5s
- 198   3      
- 199   3                  p = strstr(RX_BUFFER,"1");
- 200   3                  if(p != NULL)
- 201   3                  {
- 202   4                      STATUS = REG;
- 203   4                      i=0;
- 204   4                  }
- 205   3                  else
- 206   3                  {
- 207   4                      p = strstr(RX_BUFFER,"5");
- 208   4                      if(p != NULL)
- 209   4                      {
- 210   5                          STATUS = REG;
- 211   5                          i=0;
- 212   5                      }
- 213   4                      else
- 214   4                      {
- 215   5                          i++;
- 216   5                      }
- 217   4                  }
- 218   3              }
- 219   2          }
- 220   1      
- 221   1          else if(STATUS == REG)
- 222   1          {
- 223   2              //  "AT+CSQ"            检查网络质量(0-31)
- 224   2              //  YES :   SIGNAL 
- 225   2              //  NO  :   i > 50  AIRPLANE
- 226   2              unsigned char *p;
- 227   2      
- 228   2              CLEAN_RX_BUFFER();
- 229   2              Delay1ms(30);
- 230   2      
- 231   2              if(i > 50)
- 232   2              {
- 233   3                  STATUS = AIRPLANE;
- 234   3                  i=0;
- 235   3              }
- 236   2              else
- 237   2              {
- 238   3                  SEND_STRING(CMD_SIGNAL);
- 239   3                  Delay1ms(30);
- 240   3      
- 241   3                  // if(RX_BUFFER[6] > '0')
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 5   
+ 180   1          else if(STATUS == SIM)
+ 181   1          {
+ 182   2              //  "AT+CREG"           检查是否注册到家庭网络(0,1)或漫游网络(0,5)
+ 183   2              //  YES :   REG 
+ 184   2              //  NO  :   i > 50  AIRPLANE 
+ 185   2              unsigned char *p;
+ 186   2      
+ 187   2              CLEAN_RX_BUFFER();
+ 188   2              Delay1ms(30);
+ 189   2      
+ 190   2              if(i > 50)
+ 191   2              {
+ 192   3                  STATUS = AIRPLANE;
+ 193   3                  i=0;
+ 194   3              }
+ 195   2              else
+ 196   2              { 
+ 197   3                  SEND_STRING(CMD_REG);
+ 198   3                  Delay1ms(30);   // 0.5s
+ 199   3      
+ 200   3                  p = strstr(RX_BUFFER,"1");
+ 201   3                  if(p != NULL)
+ 202   3                  {
+ 203   4                      STATUS = REG;
+ 204   4                      i=0;
+ 205   4                  }
+ 206   3                  else
+ 207   3                  {
+ 208   4                      p = strstr(RX_BUFFER,"5");
+ 209   4                      if(p != NULL)
+ 210   4                      {
+ 211   5                          STATUS = REG;
+ 212   5                          i=0;
+ 213   5                      }
+ 214   4                      else
+ 215   4                      {
+ 216   5                          i++;
+ 217   5                      }
+ 218   4                  }
+ 219   3              }
+ 220   2          }
+ 221   1      
+ 222   1          else if(STATUS == REG)
+ 223   1          {
+ 224   2              //  "AT+CSQ"            检查网络质量(0-31)
+ 225   2              //  YES :   SIGNAL 
+ 226   2              //  NO  :   i > 50  AIRPLANE
+ 227   2              unsigned char *p;
+ 228   2      
+ 229   2              CLEAN_RX_BUFFER();
+ 230   2              Delay1ms(30);
+ 231   2      
+ 232   2              if(i > 50)
+ 233   2              {
+ 234   3                  STATUS = AIRPLANE;
+ 235   3                  i=0;
+ 236   3              }
+ 237   2              else
+ 238   2              {
+ 239   3                  SEND_STRING(CMD_SIGNAL);
+ 240   3                  Delay1ms(30);
+ 241   3      
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 5   
 
- 242   3                  // {
- 243   3      
- 244   3                  //     CLEAN_RX_BUFFER();
- 245   3                  //     STATUS = SIGNAL;
- 246   3                  //     i=0;
- 247   3                  // }
- 248   3                  // else if(RX_BUFFER[7] > '0')
- 249   3                  // {
- 250   3      
- 251   3                  //     CLEAN_RX_BUFFER();
- 252   3                  //     STATUS = SIGNAL;
- 253   3                  //     i=0;
- 254   3                  // }
- 255   3                  // else
- 256   3                  // {
- 257   3                  //     i++;
- 258   3                  //     CLEAN_RX_BUFFER();
- 259   3                  // }
- 260   3      
- 261   3                  p = strstr(RX_BUFFER,"OK");
- 262   3                  if(p != NULL)
- 263   3                  {
- 264   4                      STATUS = SIGNAL;
- 265   4                  }
- 266   3                  else
- 267   3                  {
- 268   4                      i++;
- 269   4                  }
- 270   3              }
- 271   2              
- 272   2              // p = strstr(RX_BUFFER,"OK");
- 273   2              // if(p != NULL)
- 274   2              // {
- 275   2              //     STATUS = SIGNAL;
- 276   2              //     CLEAN_RX_BUFFER();
- 277   2              // }
- 278   2          }
- 279   1      
- 280   1          else if(STATUS == SIGNAL)
- 281   1          {
- 282   2              //  "AT+CMPS?"           检查有没有新短信
- 283   2              //  YES :   NEWSMS 
- 284   2              //  NO  :   i > 20  READY
- 285   2              unsigned char *p;
- 286   2              unsigned char *g;
- 287   2              int k;
- 288   2      
- 289   2              CLEAN_RX_BUFFER();
- 290   2              Delay1ms(30);
- 291   2      
- 292   2              P0 = 0X80;
+ 242   3                  // if(RX_BUFFER[6] > '0')
+ 243   3                  // {
+ 244   3      
+ 245   3                  //     CLEAN_RX_BUFFER();
+ 246   3                  //     STATUS = SIGNAL;
+ 247   3                  //     i=0;
+ 248   3                  // }
+ 249   3                  // else if(RX_BUFFER[7] > '0')
+ 250   3                  // {
+ 251   3      
+ 252   3                  //     CLEAN_RX_BUFFER();
+ 253   3                  //     STATUS = SIGNAL;
+ 254   3                  //     i=0;
+ 255   3                  // }
+ 256   3                  // else
+ 257   3                  // {
+ 258   3                  //     i++;
+ 259   3                  //     CLEAN_RX_BUFFER();
+ 260   3                  // }
+ 261   3      
+ 262   3                  p = strstr(RX_BUFFER,"OK");
+ 263   3                  if(p != NULL)
+ 264   3                  {
+ 265   4                      STATUS = SIGNAL;
+ 266   4                  }
+ 267   3                  else
+ 268   3                  {
+ 269   4                      i++;
+ 270   4                  }
+ 271   3              }
+ 272   2              
+ 273   2              // p = strstr(RX_BUFFER,"OK");
+ 274   2              // if(p != NULL)
+ 275   2              // {
+ 276   2              //     STATUS = SIGNAL;
+ 277   2              //     CLEAN_RX_BUFFER();
+ 278   2              // }
+ 279   2          }
+ 280   1      
+ 281   1          else if(STATUS == SIGNAL)
+ 282   1          {
+ 283   2              //  "AT+CMPS?"           检查有没有新短信
+ 284   2              //  YES :   NEWSMS 
+ 285   2              //  NO  :   i > 20  READY
+ 286   2              unsigned char *p;
+ 287   2              unsigned char *g;
+ 288   2              char temp;
+ 289   2              int k;
+ 290   2      
+ 291   2              CLEAN_RX_BUFFER();
+ 292   2              Delay1ms(30);
  293   2      
- 294   2              if( i >= 50)
- 295   2              {
- 296   3                  STATUS = REARY;
- 297   3                  i=0;
- 298   3              }
- 299   2              else
- 300   2              {
- 301   3                  SEND_STRING(CMD_CKSMS);
- 302   3                  Delay1ms(30);
- 303   3      
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 6   
+ 294   2              P0 = 0X80;
+ 295   2      
+ 296   2              if( i >= 50)
+ 297   2              {
+ 298   3                  STATUS = REARY;
+ 299   3                  i=0;
+ 300   3              }
+ 301   2              else
+ 302   2              {
+ 303   3                  SEND_STRING(CMD_CKSMS);
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 6   
 
- 304   3                  g = strstr(RX_BUFFER,"SM_P");
- 305   3                  if(g != NULL)
- 306   3                  {
- 307   4                      g +=6;
- 308   4                      SMS_CNT[0] = *g++;
- 309   4                      SMS_CNT[1]  = *g;
- 310   4      
- 311   4                      if(SMS_CNT[1] == ',')
- 312   4                      {
- 313   5                          SMS_CNT[1] = '\0';
- 314   5                      }
- 315   4                      // if(*g >= '0' && *g <= '9');
+ 304   3                  Delay1ms(30);
+ 305   3      
+ 306   3                  g = strstr(RX_BUFFER,"SM_P");
+ 307   3                  if(g != NULL)
+ 308   3                  {
+ 309   4                      g +=6;
+ 310   4                      temp = *g;
+ 311   4                      // g +=6;
+ 312   4                      // SMS_CNT[0] = *g++;
+ 313   4                      // SMS_CNT[1]  = *g;
+ 314   4      
+ 315   4                      // if(SMS_CNT[1] == ',')
  316   4                      // {
- 317   4                      //     SMS_CNT[1]  =  *g;
+ 317   4                      //     SMS_CNT[1] = '\0';
  318   4                      // }
- 319   4                  }
- 320   3                  if(SMS_CNT[0] > '0')
- 321   3                  {
- 322   4                      if(SMS_CNT[0] <= '9')
- 323   4                      {
- 324   5      
- 325   5                          // SEND_BYTE(SMS_CNT[0]);
- 326   5                          // SEND_BYTE(SMS_CNT[0]);
- 327   5                          // SEND_BYTE(SMS_CNT[0]);
- 328   5                          // SEND_BYTE(SMS_CNT[0]);
- 329   5                          // SEND_BYTE(SMS_CNT[0]);
- 330   5                          // SEND_BYTE(SMS_CNT[1]);
- 331   5                          // SEND_BYTE(SMS_CNT[1]);
- 332   5                          // SEND_BYTE(SMS_CNT[1]);
- 333   5                          // SEND_BYTE(SMS_CNT[1]);
- 334   5                          // SEND_BYTE(SMS_CNT[1]);
- 335   5                      
- 336   5      
- 337   5                          CHANGE_BUFFER = 1;
- 338   5      
- 339   5                          TX_INDEX = 0;
- 340   5      
- 341   5                          SEND_STRING(CMD_GTSMS);
- 342   5      
- 343   5                          for(k = 0; k < strlen(SMS_CNT); k++)
- 344   5                              {
- 345   6                                  SEND_BYTE(SMS_CNT[k]);
- 346   6                              }
- 347   5                          
- 348   5                          // 遍历短信，耗性能
- 349   5                      
- 350   5                          // for(l = 50;l > 0; l--)
- 351   5                          // {
- 352   5                          //     SEND_STRING(CMD_GTSMS);
- 353   5                          //     SEND_BYTE(l);
- 354   5                          //     SEND_BYTE(0X0D);
- 355   5                          //     SEND_BYTE(0X0A);
- 356   5                          //     if(strlen(TX_BUFFER) >= 36)
- 357   5                          //     {
- 358   5                          //         SMS_INDEX = l;
- 359   5                          //         break;
- 360   5                          //     }
- 361   5                          // }
- 362   5                          
- 363   5                          SEND_BYTE(0X0D);
- 364   5                          SEND_BYTE(0X0A);
- 365   5                          
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 7   
+ 319   4                      // if(*g >= '0' && *g <= '9');
+ 320   4                      // {
+ 321   4                      //     SMS_CNT[1]  =  *g;
+ 322   4                      // }
+ 323   4                  }
+ 324   3                  // if(SMS_CNT[0] > '0')
+ 325   3                  if(temp > '0')
+ 326   3                  {
+ 327   4                      for(k = 1; k <= 50; k++)
+ 328   4                      {
+ 329   5                          CLEAN_TX_BUFFER();
+ 330   5                          Delay1ms(30);
+ 331   5      
+ 332   5                          CHANGE_BUFFER = 1;
+ 333   5                          // TX_INDEX = 0;
+ 334   5      
+ 335   5                          SEND_STRING(CMD_GTSMS);
+ 336   5                          if(k >= 10)
+ 337   5                          {
+ 338   6                              SEND_BYTE(TOCHAR(k/10));
+ 339   6                              SEND_BYTE(TOCHAR(k%10));
+ 340   6                          }else
+ 341   5                          {
+ 342   6                              SEND_BYTE(TOCHAR(k));
+ 343   6                          }
+ 344   5                          SEND_BYTE(0X0D);
+ 345   5                          SEND_BYTE(0X0A);
+ 346   5      
+ 347   5                          Delay1ms(50);
+ 348   5                          CHANGE_BUFFER = 0;
+ 349   5      
+ 350   5                          if(strlen(TX_BUFFER) >= 36)
+ 351   5                          {
+ 352   6                              p = strstr(TX_BUFFER,"+CM");
+ 353   6                              if(p != NULL)
+ 354   6                              {
+ 355   7                                  if(k >= 10)
+ 356   7                                  {
+ 357   8                                      SMS_CNT[0] = TOCHAR(k/10);
+ 358   8                                      SMS_CNT[1] = TOCHAR(k%10);
+ 359   8                                  }else
+ 360   7                                  {
+ 361   8                                      SMS_CNT[0] = TOCHAR(k);
+ 362   8                                      SMS_CNT[1] = '\0';
+ 363   8                                  }                   
+ 364   7                                  STATUS = NEWSMS;
+ 365   7                                  TX_INDEX = 0;
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 7   
 
- 366   5                          Delay1ms(50);
- 367   5                          CHANGE_BUFFER = 0;
- 368   5                          
- 369   5      
- 370   5                          p = strstr(TX_BUFFER,"+CM"); // "+CMGR:"
- 371   5                          if(p != NULL)
- 372   5                          {
- 373   6                              // strcpy(TX_BUFFER,RX_BUFFER);
- 374   6                              // SEND_STRING(RX_BUFFER);
- 375   6                              // Delay1ms(5);
- 376   6                              // CLEAN_RX_BUFFER();
- 377   6                              // SEND_BYTE(0X31);
- 378   6                              // SEND_BYTE(0X31);
- 379   6                              // SEND_BYTE(0X31);
- 380   6                              // SEND_BYTE(0X31);
- 381   6                              // SEND_BYTE(0X31);
- 382   6                              // DEBUG();
- 383   6                              // SEND_STRING(TX_BUFFER);
- 384   6      
- 385   6                              TX_INDEX = 0;   // 重置索引，保证发出去的数据序列正确
- 386   6                              STATUS = NEWSMS;
- 387   6                              i=0;
- 388   6                          }
- 389   5                          else
- 390   5                          {
- 391   6                              i++;
- 392   6                          }
- 393   5                      }      
- 394   4                  }
- 395   3                  else
- 396   3                  {
- 397   4                      i++;
- 398   4                  }
- 399   3              }
- 400   2              P0 = 0X00;
- 401   2          }
- 402   1      
- 403   1          else if(STATUS == SHUT)
- 404   1          {
- 405   2              //  "AT+CIPSHUT"             关闭移动场景
- 406   2              //  YES :   SIGNAL 
- 407   2              //  NO  :   AIRPLANE
- 408   2              unsigned char *p;
- 409   2              
- 410   2              // SEND_STRING(CMD_SHUTGPRS);
- 411   2              // Delay1ms(5);
- 412   2              CLEAN_RX_BUFFER();
- 413   2              Delay1ms(30);
- 414   2      
- 415   2              SEND_STRING(CMD_SHUT);
- 416   2              Delay1ms(30);
- 417   2      
- 418   2              p = strstr(RX_BUFFER,"SHUT OK");
- 419   2              if(p != NULL)
- 420   2              {
- 421   3                  STATUS = SIGNAL;
- 422   3              }
- 423   2              else
- 424   2              {
- 425   3                  STATUS = AIRPLANE;
- 426   3              }      
- 427   2          }
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 8   
+ 366   7                                  i = 0;
+ 367   7                                  FORMAT_TX_BUFFER();
+ 368   7                                  Delay1ms(30);
+ 369   7      
+ 370   7                                  break;
+ 371   7                              }
+ 372   6                          }
+ 373   5                          // DEBUG();
+ 374   5                      }
+ 375   4                  }
+ 376   3                  else
+ 377   3                  {
+ 378   4                      i++;
+ 379   4                  }
+ 380   3              }
+ 381   2              P0 = 0X00;
+ 382   2          }
+ 383   1      
+ 384   1          else if(STATUS == SHUT)
+ 385   1          {
+ 386   2              //  "AT+CIPSHUT"             关闭移动场景
+ 387   2              //  YES :   SIGNAL 
+ 388   2              //  NO  :   AIRPLANE
+ 389   2              unsigned char *p;
+ 390   2              
+ 391   2              // SEND_STRING(CMD_SHUTGPRS);
+ 392   2              // Delay1ms(5);
+ 393   2              CLEAN_RX_BUFFER();
+ 394   2              Delay1ms(30);
+ 395   2      
+ 396   2              SEND_STRING(CMD_SHUT);
+ 397   2              Delay1ms(30);
+ 398   2      
+ 399   2              p = strstr(RX_BUFFER,"SHUT OK");
+ 400   2              if(p != NULL)
+ 401   2              {
+ 402   3                  STATUS = SIGNAL;
+ 403   3              }
+ 404   2              else
+ 405   2              {
+ 406   3                  STATUS = AIRPLANE;
+ 407   3              }      
+ 408   2          }
+ 409   1      
+ 410   1          else if(STATUS == NEWSMS)
+ 411   1          {
+ 412   2              //  "AT+CSTT=\"CMNET\""         设置CMNET
+ 413   2              //  YES :   APN 
+ 414   2              //  NO  :   SHUT
+ 415   2              unsigned char *p;
+ 416   2      
+ 417   2              CLEAN_RX_BUFFER();
+ 418   2              Delay1ms(30);
+ 419   2      
+ 420   2              SEND_STRING(CMD_APN);
+ 421   2              Delay1ms(50);
+ 422   2      
+ 423   2              p = strstr(RX_BUFFER,"OK");
+ 424   2              if(p != NULL)
+ 425   2              {
+ 426   3                  STATUS = APN;
+ 427   3              }
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 8   
 
- 428   1      
- 429   1          else if(STATUS == NEWSMS)
- 430   1          {
- 431   2              //  "AT+CSTT=\"CMNET\""         设置CMNET
- 432   2              //  YES :   APN 
- 433   2              //  NO  :   SHUT
- 434   2              unsigned char *p;
- 435   2      
- 436   2              CLEAN_RX_BUFFER();
- 437   2              Delay1ms(30);
- 438   2      
- 439   2              SEND_STRING(CMD_APN);
- 440   2              Delay1ms(50);
- 441   2      
- 442   2              p = strstr(RX_BUFFER,"OK");
- 443   2              if(p != NULL)
- 444   2              {
- 445   3                  STATUS = APN;
- 446   3              }
- 447   2              else
- 448   2              {
- 449   3                  STATUS = SHUT;
- 450   3              }       
- 451   2          }
- 452   1      
- 453   1          else if(STATUS == APN)
- 454   1          {
- 455   2              //  "AT+CIICR"                  开启GPRS
- 456   2              //  YES :   GPRS 
- 457   2              //  NO  :   SHUT
- 458   2              unsigned char *p;
- 459   2      
- 460   2              CLEAN_RX_BUFFER();
- 461   2              Delay1ms(30);
- 462   2      
- 463   2              SEND_STRING(CMD_GPRS);
- 464   2              Delay1ms(50);
- 465   2      
- 466   2              p = strstr(RX_BUFFER,"OK");
- 467   2              if(p != NULL)
- 468   2              {
- 469   3                  STATUS = GPRS;
- 470   3              }
- 471   2              else
- 472   2              {
- 473   3                  STATUS = SHUT;
- 474   3              }        
- 475   2          }
- 476   1      
- 477   1          else if(STATUS == GPRS)
- 478   1          {
- 479   2              //  "AT+CIFSR"                  查询获取的IP
- 480   2              //  YES :   IP 
- 481   2              //  NO  :   SHUT
- 482   2              unsigned char *p;
- 483   2      
- 484   2              CLEAN_RX_BUFFER();
- 485   2              Delay1ms(30);
- 486   2      
- 487   2              SEND_STRING(CMD_IP);
- 488   2              Delay1ms(30);
- 489   2      
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 9   
+ 428   2              else
+ 429   2              {
+ 430   3                  STATUS = SHUT;
+ 431   3              }       
+ 432   2          }
+ 433   1      
+ 434   1          else if(STATUS == APN)
+ 435   1          {
+ 436   2              //  "AT+CIICR"                  开启GPRS
+ 437   2              //  YES :   GPRS 
+ 438   2              //  NO  :   SHUT
+ 439   2              unsigned char *p;
+ 440   2      
+ 441   2              CLEAN_RX_BUFFER();
+ 442   2              Delay1ms(30);
+ 443   2      
+ 444   2              SEND_STRING(CMD_GPRS);
+ 445   2              Delay1ms(50);
+ 446   2      
+ 447   2              p = strstr(RX_BUFFER,"OK");
+ 448   2              if(p != NULL)
+ 449   2              {
+ 450   3                  STATUS = GPRS;
+ 451   3              }
+ 452   2              else
+ 453   2              {
+ 454   3                  STATUS = SHUT;
+ 455   3              }        
+ 456   2          }
+ 457   1      
+ 458   1          else if(STATUS == GPRS)
+ 459   1          {
+ 460   2              //  "AT+CIFSR"                  查询获取的IP
+ 461   2              //  YES :   IP 
+ 462   2              //  NO  :   SHUT
+ 463   2              unsigned char *p;
+ 464   2      
+ 465   2              CLEAN_RX_BUFFER();
+ 466   2              Delay1ms(30);
+ 467   2      
+ 468   2              SEND_STRING(CMD_IP);
+ 469   2              Delay1ms(30);
+ 470   2      
+ 471   2              p = strstr(RX_BUFFER,".");
+ 472   2              if(p != NULL)
+ 473   2              {
+ 474   3                  STATUS = IP;
+ 475   3              }
+ 476   2          }
+ 477   1      
+ 478   1          else if(STATUS == IP)
+ 479   1          {
+ 480   2              //  "AT+CIPSTART=\"TCP\",\"8.8.8.8\",\"443\""       连接远程服务器 
+ 481   2              //  YES :   SERVER 
+ 482   2              //  NO  :   SHUT
+ 483   2              unsigned char *p;
+ 484   2      
+ 485   2              CLEAN_RX_BUFFER();
+ 486   2              Delay1ms(30);
+ 487   2      
+ 488   2              SEND_STRING(CMD_SERVER);
+ 489   2              Delay1ms(50);
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 9   
 
- 490   2              p = strstr(RX_BUFFER,".");
- 491   2              if(p != NULL)
- 492   2              {
- 493   3                  STATUS = IP;
- 494   3              }
- 495   2          }
- 496   1      
- 497   1          else if(STATUS == IP)
- 498   1          {
- 499   2              //  "AT+CIPSTART=\"TCP\",\"8.8.8.8\",\"443\""       连接远程服务器 
- 500   2              //  YES :   SERVER 
- 501   2              //  NO  :   SHUT
- 502   2              unsigned char *p;
- 503   2      
- 504   2              CLEAN_RX_BUFFER();
- 505   2              Delay1ms(30);
- 506   2      
- 507   2              SEND_STRING(CMD_SERVER);
- 508   2              Delay1ms(50);
- 509   2      
- 510   2              p = strstr(RX_BUFFER,"CONNECT OK");
- 511   2              if(p != NULL)
- 512   2              {
- 513   3                  STATUS = SERVER;
- 514   3              }
- 515   2              else
+ 490   2      
+ 491   2              p = strstr(RX_BUFFER,"CONNECT OK");
+ 492   2              if(p != NULL)
+ 493   2              {
+ 494   3                  STATUS = SERVER;
+ 495   3              }
+ 496   2              else
+ 497   2              {
+ 498   3                  STATUS = SHUT;
+ 499   3              }
+ 500   2          }
+ 501   1      
+ 502   1          else if(STATUS == SERVER)
+ 503   1          {
+ 504   2              //  "AT+CIPSEND"                发送短信 
+ 505   2              //  YES :   SIGNAL 
+ 506   2              //  NO  :   SERVER  i > 2 SHUT
+ 507   2              unsigned char *p;
+ 508   2              unsigned char *g;
+ 509   2              int j;
+ 510   2              int k;
+ 511   2      
+ 512   2              CLEAN_RX_BUFFER();
+ 513   2              Delay1ms(30);
+ 514   2      
+ 515   2              if(i > 2)
  516   2              {
  517   3                  STATUS = SHUT;
- 518   3              }
- 519   2          }
- 520   1      
- 521   1          else if(STATUS == SERVER)
- 522   1          {
- 523   2              //  "AT+CIPSEND"                发送短信 
- 524   2              //  YES :   SIGNAL 
- 525   2              //  NO  :   SERVER  i > 2 SHUT
- 526   2              unsigned char *p;
- 527   2              unsigned char *g;
- 528   2              int j;
- 529   2              int k;
- 530   2      
- 531   2              CLEAN_RX_BUFFER();
- 532   2              Delay1ms(30);
- 533   2      
- 534   2              if(i > 2)
- 535   2              {
- 536   3                  STATUS = SHUT;
- 537   3                  i=0;
- 538   3              }
- 539   2              else
- 540   2              {
- 541   3                  SEND_STRING(CMD_SEND);
- 542   3                  Delay1ms(30);
- 543   3      
- 544   3                  p = strstr(RX_BUFFER,">");
- 545   3                  if(p != NULL)
- 546   3                  {
- 547   4                      CLEAN_RX_BUFFER();
- 548   4                      Delay1ms(30);
- 549   4      
- 550   4                      for(j = 0;j < strlen(TX_BUFFER); j++)
- 551   4                      {
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 10  
+ 518   3                  i=0;
+ 519   3              }
+ 520   2              else
+ 521   2              {
+ 522   3                  SEND_STRING(CMD_SEND);
+ 523   3                  Delay1ms(30);
+ 524   3      
+ 525   3                  p = strstr(RX_BUFFER,">");
+ 526   3                  if(p != NULL)
+ 527   3                  {
+ 528   4                      // CLEAN_RX_BUFFER();
+ 529   4                      // Delay1ms(30);
+ 530   4      
+ 531   4                      for(j = 0;j < strlen(TX_BUFFER); j++)
+ 532   4                      {
+ 533   5                          SEND_BYTE(TX_BUFFER[j]);
+ 534   5                      }
+ 535   4                      SEND_BYTE(0X1A);
+ 536   4                      Delay1ms(30); //延迟太低就收不到反馈
+ 537   4      
+ 538   4                      g = strstr(RX_BUFFER,"OK");  //  "SEND OK"
+ 539   4                      if(g != NULL)
+ 540   4                      {
+ 541   5      
+ 542   5                          SEND_STRING(CMD_DLSMS);
+ 543   5                          
+ 544   5      
+ 545   5                          for(k = 0; k < strlen(SMS_CNT); k++)
+ 546   5                          {
+ 547   6                              SEND_BYTE(SMS_CNT[k]);
+ 548   6                          }
+ 549   5      
+ 550   5                          SEND_BYTE(0X0D);
+ 551   5                          SEND_BYTE(0X0A);
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 10  
 
- 552   5                          SEND_BYTE(TX_BUFFER[j]);
- 553   5                      }
- 554   4                      SEND_BYTE(0X1A);
- 555   4                      Delay1ms(30); //延迟太低就收不到反馈
- 556   4      
- 557   4                      g = strstr(RX_BUFFER,"SEND OK");  //  "SEND OK"
- 558   4                      if(g != NULL)
+ 552   5      
+ 553   5                          CLEAN_TX_BUFFER();
+ 554   5                          STATUS = SHUT;
+ 555   5                          i=0;
+ 556   5      
+ 557   5                      }
+ 558   4                      else
  559   4                      {
- 560   5      
- 561   5                          SEND_STRING(CMD_DLSMS);
- 562   5      
- 563   5                          for(k = 0; k < strlen(SMS_CNT); k++)
- 564   5                          {
- 565   6                              SEND_BYTE(SMS_CNT[k]);
- 566   6                          }
- 567   5      
- 568   5                          SEND_BYTE(0X0D);
- 569   5                          SEND_BYTE(0X0A);
- 570   5      
- 571   5                          CLEAN_TX_BUFFER();
- 572   5                          STATUS = SHUT;
- 573   5                          i=0;
- 574   5      
- 575   5                      }
- 576   4                      else
- 577   4                      {
- 578   5                          i++;
- 579   5                      }
- 580   4                      DEBUG();            
- 581   4                  }
- 582   3                  else
- 583   3                  {
- 584   4                      i++;
- 585   4                  }            
- 586   3              }        
- 587   2          }
- 588   1      }
- 589          
- 590          //  1.发送 AT 和模块通信
- 591          //  2.发送 AT+CPIN? 检测SIM卡状态
- 592          //  3.发送 AT+CREG? 查询入网情况
- 593          //  3.发送 AT+CSQ 查询信号质量
- 594          //  4.发送 AT+CGATT? 查询GPRS附着情况
+ 560   5                          i++;
+ 561   5                      }
+ 562   4                  }
+ 563   3                  else
+ 564   3                  {
+ 565   4                      i++;
+ 566   4                  } 
+ 567   3                  DEBUG();           
+ 568   3              }        
+ 569   2          }
+ 570   1      }
+ 571          
+ 572          //  1.发送 AT 和模块通信
+ 573          //  2.发送 AT+CPIN? 检测SIM卡状态
+ 574          //  3.发送 AT+CREG? 查询入网情况
+ 575          //  3.发送 AT+CSQ 查询信号质量
+ 576          //  4.发送 AT+CGATT? 查询GPRS附着情况
+ 577          
+ 578          
+ 579          //  5.发送 AT+CIPSHUT 关闭移动场景
+ 580          //  6.发送 AT+CSTT="CMNET" 设置APN
+ 581          //  7.发送 AT+CIICR 激活移动场景
+ 582          //  8.发送 AT+CIFSR 查询IP地址
+ 583          //  9.发送 AT+CIPSTART="TCP","193.112.94.54","9001" 连接服务器
+ 584          // 10.发送 AT+CIPSEND 收到'>'后，发送数据
+ 585          // 11.发送 AT+CIPCLOSE 关闭连接
+ 586          // 12.发送 AT+CIPSHUT 关闭移动场景
+ 587          
+ 588          
+ 589          void SEND_BYTE(unsigned char c)
+ 590          {
+ 591   1          while(!TI);
+ 592   1          TI = 0;
+ 593   1          SBUF = c;
+ 594   1      }
  595          
  596          
- 597          //  5.发送 AT+CIPSHUT 关闭移动场景
- 598          //  6.发送 AT+CSTT="CMNET" 设置APN
- 599          //  7.发送 AT+CIICR 激活移动场景
- 600          //  8.发送 AT+CIFSR 查询IP地址
- 601          //  9.发送 AT+CIPSTART="TCP","193.112.94.54","9001" 连接服务器
- 602          // 10.发送 AT+CIPSEND 收到'>'后，发送数据
- 603          // 11.发送 AT+CIPCLOSE 关闭连接
- 604          // 12.发送 AT+CIPSHUT 关闭移动场景
- 605          
- 606          
- 607          void SEND_BYTE(unsigned char c)
- 608          {
- 609   1          while(!TI);
- 610   1          TI = 0;
- 611   1          SBUF = c;
- 612   1      }
- 613          
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 11  
+ 597          void SEND_STRING(unsigned char *p)
+ 598          {
+ 599   1          while(*p != '\0')
+ 600   1          {
+ 601   2              SEND_BYTE(*p++);
+ 602   2          }
+ 603   1      }
+ 604          
+ 605          void CLEAN_RX_BUFFER()
+ 606          {
+ 607   1          memset(RX_BUFFER,0,sizeof(RX_BUFFER));
+ 608   1          RX_INDEX = 0;
+ 609   1      }
+ 610          
+ 611          void CLEAN_TX_BUFFER()
+ 612          {
+ 613   1          memset(TX_BUFFER,0,sizeof(TX_BUFFER));
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 11  
 
- 614          
- 615          void SEND_STRING(unsigned char *p)
- 616          {
- 617   1          while(*p != '\0')
- 618   1          {
- 619   2              SEND_BYTE(*p++);
- 620   2          }
- 621   1      }
- 622          
- 623          void CLEAN_RX_BUFFER()
- 624          {
- 625   1          memset(RX_BUFFER,0,sizeof(RX_BUFFER));
- 626   1          RX_INDEX = 0;
- 627   1      }
- 628          
- 629          void CLEAN_TX_BUFFER()
- 630          {
- 631   1          memset(TX_BUFFER,0,sizeof(TX_BUFFER));
- 632   1          TX_INDEX = 0;
- 633   1      }
- 634          
- 635          //  50  感觉是1s
- 636          //  100 感觉是3s
- 637          //  200 感觉是7s
- 638          //  500 感觉是17s
- 639          void Delay1ms(unsigned int i)
- 640          {
- 641   1              unsigned int j;
- 642   1              while(i--)
- 643   1              {
- 644   2                      for(j = 0; j < 125; j++);
- 645   2              }
- 646   1      }
- 647          
- 648          void SERIAL() interrupt 4
- 649          {
- 650   1          if(RI)
- 651   1          {
- 652   2              if(!CHANGE_BUFFER)
- 653   2              {
- 654   3                  RI = 0;
- 655   3                  RX_BUFFER[RX_INDEX++] = SBUF;
- 656   3      
- 657   3                  if(RX_INDEX >= RX_LEN - 1)
- 658   3                  {
- 659   4                      RX_INDEX = 0;
- 660   4                  }
- 661   3              }
- 662   2              else
- 663   2              {
- 664   3                  RI = 0;
- 665   3                  TX_BUFFER[TX_INDEX++] = SBUF;
- 666   3      
- 667   3                  if(TX_INDEX >= TX_LEN - 1)
- 668   3                  {
- 669   4                      TX_INDEX = 0;
+ 614   1          TX_INDEX = 0;
+ 615   1      }
+ 616          
+ 617          void FORMAT_TX_BUFFER()
+ 618          {
+ 619   1          char *ps;
+ 620   1          int i;
+ 621   1      
+ 622   1          ps = strstr(TX_BUFFER,",\"\",");
+ 623   1          if(ps != NULL)
+ 624   1          {
+ 625   2              ps += 7;
+ 626   2              if(*ps == 0X0A)
+ 627   2              {
+ 628   3                  ps += 1;
+ 629   3                  for(i = 0; *ps != '\0'; i++)
+ 630   3                  {
+ 631   4                      if(*ps == 0X20)
+ 632   4                      {
+ 633   5                          TX_BUFFER[i] = '\0';
+ 634   5                          break;
+ 635   5                      }else if (*ps == 0X0D)
+ 636   4                       {
+ 637   5                          TX_BUFFER[i] = '\0';
+ 638   5                          break;
+ 639   5                      }else if (*ps == 0X0A)
+ 640   4                       {
+ 641   5                          TX_BUFFER[i] = '\0';
+ 642   5                          break;
+ 643   5                      }else
+ 644   4                      {
+ 645   5                          TX_BUFFER[i] = *ps++;
+ 646   5                      }
+ 647   4                  }
+ 648   3      
+ 649   3              }else if (*ps == 0X0D) 
+ 650   2              {
+ 651   3                  ps += 2;
+ 652   3                  for(i = 0; *ps != '\0'; i++)
+ 653   3                  {
+ 654   4                      if(*ps == 0X20)
+ 655   4                      {
+ 656   5                          TX_BUFFER[i] = '\0';
+ 657   5                          break;
+ 658   5                      }else if (*ps == 0X0D)
+ 659   4                       {
+ 660   5                          TX_BUFFER[i] = '\0';
+ 661   5                          break;
+ 662   5                      }else if (*ps == 0X0A)
+ 663   4                       {
+ 664   5                          TX_BUFFER[i] = '\0';
+ 665   5                          break;
+ 666   5                      }else
+ 667   4                      {
+ 668   5                          TX_BUFFER[i] = *ps++;
+ 669   5                      }
  670   4                  }
- 671   3              }
- 672   2              
- 673   2          }
- 674   1      }
- 675          
-C51 COMPILER V9.01   SIM800L                                                               04/05/2019 13:19:46 PAGE 12  
+ 671   3              }        
+ 672   2          }
+ 673   1      }
+ 674          
+ 675          //  50  感觉是1s
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 12  
 
- 676          void UART()
- 677          {
- 678   1          SCON = 0X52;
- 679   1          PCON = 0X80;
- 680   1          TMOD = 0X20;
- 681   1          TH1  = 0XFD;
- 682   1          TR1  = 0XFD;
- 683   1      
- 684   1          ES   = 1;
- 685   1          EA   = 1;
- 686   1          TR1  = 1;
- 687   1      }
- 688          
- 689          void DEBUG()
- 690          {
- 691   1          Delay1ms(100);
- 692   1      
- 693   1          SEND_BYTE('D');
- 694   1          SEND_BYTE('E');
- 695   1          SEND_BYTE('B');
- 696   1          SEND_BYTE('U');
- 697   1          SEND_BYTE('G');
- 698   1          SEND_BYTE(':');
- 699   1      
- 700   1          SEND_STRING(RX_BUFFER);
- 701   1      
- 702   1          SEND_BYTE(':');
- 703   1          SEND_BYTE('D');
- 704   1          SEND_BYTE('E');
- 705   1          SEND_BYTE('B');
- 706   1          SEND_BYTE('U');
- 707   1          SEND_BYTE('G');
- 708   1      
- 709   1          Delay1ms(100);
- 710   1      }
+ 676          //  100 感觉是3s
+ 677          //  200 感觉是7s
+ 678          //  500 感觉是17s
+ 679          void Delay1ms(unsigned int i)
+ 680          {
+ 681   1              unsigned int j;
+ 682   1              while(i--)
+ 683   1              {
+ 684   2                      for(j = 0; j < 125; j++);
+ 685   2              }
+ 686   1      }
+ 687          
+ 688          void SERIAL() interrupt 4
+ 689          {
+ 690   1          if(RI)
+ 691   1          {
+ 692   2              if(!CHANGE_BUFFER)
+ 693   2              {
+ 694   3                  RI = 0;
+ 695   3                  RX_BUFFER[RX_INDEX++] = SBUF;
+ 696   3      
+ 697   3                  if(RX_INDEX >= RX_LEN - 1)
+ 698   3                  {
+ 699   4                      RX_INDEX = 0;
+ 700   4                  }
+ 701   3              }
+ 702   2              else
+ 703   2              {
+ 704   3                  RI = 0;
+ 705   3                  TX_BUFFER[TX_INDEX++] = SBUF;
+ 706   3      
+ 707   3                  if(TX_INDEX >= TX_LEN - 1)
+ 708   3                  {
+ 709   4                      TX_INDEX = 0;
+ 710   4                  }
+ 711   3              }
+ 712   2              
+ 713   2          }
+ 714   1      }
+ 715          
+ 716          void UART()
+ 717          {
+ 718   1          SCON = 0X52;
+ 719   1          PCON = 0X80;
+ 720   1          TMOD = 0X20;
+ 721   1          TH1  = 0XFD;
+ 722   1          TR1  = 0XFD;
+ 723   1      
+ 724   1          ES   = 1;
+ 725   1          EA   = 1;
+ 726   1          TR1  = 1;
+ 727   1      }
+ 728          
+ 729          void DEBUG()
+ 730          {
+ 731   1          Delay1ms(100);
+ 732   1      
+ 733   1          SEND_BYTE('D');
+ 734   1          SEND_BYTE('E');
+ 735   1          SEND_BYTE('B');
+ 736   1          SEND_BYTE('U');
+ 737   1          SEND_BYTE('G');
+C51 COMPILER V9.01   SIM800L                                                               04/05/2019 18:32:47 PAGE 13  
+
+ 738   1          SEND_BYTE(':');
+ 739   1      
+ 740   1          SEND_STRING(RX_BUFFER);
+ 741   1      
+ 742   1          SEND_BYTE(':');
+ 743   1          SEND_BYTE('D');
+ 744   1          SEND_BYTE('E');
+ 745   1          SEND_BYTE('B');
+ 746   1          SEND_BYTE('U');
+ 747   1          SEND_BYTE('G');
+ 748   1      
+ 749   1          Delay1ms(100);
+ 750   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1702    ----
-   CONSTANT SIZE    =    271    ----
+   CODE SIZE        =   2037    ----
+   CONSTANT SIZE    =    268    ----
    XDATA SIZE       =    400    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     71      13
+   DATA SIZE        =     71      18
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
