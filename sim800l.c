@@ -1,5 +1,6 @@
 #include <reg51.h>
 #include <string.h>
+#include <intrins.h>
 
 
 #define START       0x00
@@ -15,11 +16,15 @@
 #define APN         0x10
 #define GPRS        0x11
 #define IP          0x12
-#define SERVER      0x13 
+#define SERVER      0x13
+#define SEND        0x14  
 
 #define RX_LEN      60
 #define TX_LEN      400 
 #define TOCHAR(x) (x + '0')
+
+// sfr WDT_CONTR = 0XE1;
+// int data time_cnt=0;
 
 char    code    CMD_AIRPLANE[]    =   "AT+CFUN=0\r\n";
 char    code    CMD_MOBILE[]      =   "AT+CFUN=1\r\n";
@@ -37,22 +42,28 @@ char    code    CMD_GPRS[]        =   "AT+CIICR\r\n";
 char    code    CMD_IP[]          =   "AT+CIFSR\r\n";
 char    code    CMD_SERVER[]      =   "AT+CIPSTART=\"TCP\",\"193.112.94.54\",\"9001\"\r\n";
 char    code    CMD_SEND[]        =   "AT+CIPSEND\r\n";
+char    code    CMD_CLOSE[]       =   "AT+CIPCLOSE\r\n";
 
 unsigned    char    data    RX_BUFFER[RX_LEN]   =   {0};
 unsigned    int     data    RX_INDEX            =   0; 
 unsigned    char    xdata   TX_BUFFER[TX_LEN]   =   {0};
 unsigned    int     data    TX_INDEX            =   0; 
-unsigned    int     CHANGE_BUFFER               =   0;
-unsigned    char    STATUS;
-unsigned    char    SMS_CNT[2] = {0};
+unsigned    int     data    CHANGE_BUFFER       =   0;
+unsigned    char    data    STATUS;
+unsigned    char    data    SMS_CNT[2]          = {0};
 int i;
+
+// sbit RELAY = P1^4;
 
 void RUN();
 void SEND_BYTE(unsigned char c);
 void SEND_STRING(unsigned char *p);
-void CLEAN_RX_BUFFER();
+void ENABLE_INTERRUPT();
+void DISABLE_INTERRUPT();
+// void CLEAN_RX_BUFFER();
 void CLEAN_TX_BUFFER();
 void Delay1ms(unsigned int i);
+void Delay50ms();
 void SERIAL();
 void UART();
 void DEBUG();
@@ -62,11 +73,14 @@ void FORMAT_TX_BUFFER();
 
 void main()
 {
-    P0 = 0X00;
-    STATUS = START;
+    STATUS = START; // 第一次运行，初始化串口
+ 
+    // WDT_CONTR = 0X3F;   // 设置看门狗溢出时间约为9s
+    P0 = 0;
     while(1)
     {
        RUN(); 
+    //    WDT_CONTR = 0X3F;    // 每循环一次 重置一次看门狗
     }
 }
 
@@ -78,7 +92,6 @@ void RUN()
         //  INIT();             初始化串口等设置
         //  YES :   READY 
         //  NO  :
-
         UART();
         STATUS = REARY;
     }
@@ -90,9 +103,9 @@ void RUN()
         //  NO  :   硬件重启
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
-
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
+        RX_INDEX = 0;
         SEND_STRING(CMD_AIRPLANE);
         Delay1ms(100);  // 3s
 
@@ -100,7 +113,12 @@ void RUN()
         if(p !=NULL)
         {
             STATUS = MOBILE;
-        }        
+        }
+        else
+        {
+            DEBUG();
+        }
+                
     }
 
     else if(STATUS == MOBILE)
@@ -110,16 +128,22 @@ void RUN()
         //  NO  :
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
-
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
+        RX_INDEX = 0;
         SEND_STRING(CMD_MOBILE);
-        Delay1ms(30);   // 0.5s
+        // Delay1ms(30);   // 0.5s
+        Delay50ms();
 
         p = strstr(RX_BUFFER,"OK");   // "+CPIN: READY"
         if(p != NULL)
         {
             STATUS = REARY;
+        }
+        else
+        {
+            DEBUG();
+            Delay1ms(100);
         }
     }
 
@@ -130,18 +154,19 @@ void RUN()
         //  NO  :   重启模块
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
-
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
+        RX_INDEX = 0;
         SEND_STRING(CMD_AT);
-        Delay1ms(30);
+
+        // Delay1ms(30);
+        Delay50ms();
 
         p = strstr(RX_BUFFER,"OK");
         if(p != NULL)
         {
-            CLEAN_RX_BUFFER();
             STATUS = ONLINE;
-        }
+        }       
     }
 
     else if(STATUS == ONLINE)
@@ -151,8 +176,8 @@ void RUN()
         //  NO  :   i > 20  AIRPLANE
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
         if(i >= 20)
         {
@@ -161,8 +186,11 @@ void RUN()
         }
         else
         {
+            RX_INDEX = 0;
             SEND_STRING(CMD_SIM);
-            Delay1ms(30);   // 1s
+
+            // Delay1ms(30);   // 1s
+            Delay50ms();
 
             p = strstr(RX_BUFFER,"+CPIN: READY");
             if(p != NULL)
@@ -184,8 +212,8 @@ void RUN()
         //  NO  :   i > 50  AIRPLANE 
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
         if(i > 50)
         {
@@ -194,8 +222,11 @@ void RUN()
         }
         else
         { 
+            RX_INDEX = 0;
             SEND_STRING(CMD_REG);
-            Delay1ms(30);   // 0.5s
+
+            // Delay1ms(30);   // 0.5s
+            Delay50ms();
 
             p = strstr(RX_BUFFER,"1");
             if(p != NULL)
@@ -226,8 +257,8 @@ void RUN()
         //  NO  :   i > 50  AIRPLANE
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
         if(i > 50)
         {
@@ -236,8 +267,11 @@ void RUN()
         }
         else
         {
+            RX_INDEX = 0;
             SEND_STRING(CMD_SIGNAL);
-            Delay1ms(30);
+
+            // Delay1ms(30);
+            Delay50ms();
 
             // if(RX_BUFFER[6] > '0')
             // {
@@ -288,10 +322,12 @@ void RUN()
         char temp;
         int k;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
         P0 = 0X80;
+        Delay1ms(5);
+        P0 = 0X00;
 
         if( i >= 50)
         {
@@ -300,8 +336,11 @@ void RUN()
         }
         else
         {
+            RX_INDEX = 0;
             SEND_STRING(CMD_CKSMS);
-            Delay1ms(30);
+
+            // Delay1ms(30);
+            Delay50ms();
 
             g = strstr(RX_BUFFER,"SM_P");
             if(g != NULL)
@@ -322,12 +361,13 @@ void RUN()
                 // }
             }
             // if(SMS_CNT[0] > '0')
-            if(temp > '0')
+            if(temp > '0')      // temp 存放的是短信总数量
             {
                 for(k = 1; k <= 50; k++)
                 {
                     CLEAN_TX_BUFFER();
-                    Delay1ms(30);
+                    // Delay1ms(30);
+                    Delay50ms();
 
                     CHANGE_BUFFER = 1;
                     // TX_INDEX = 0;
@@ -344,7 +384,9 @@ void RUN()
                     SEND_BYTE(0X0D);
                     SEND_BYTE(0X0A);
 
-                    Delay1ms(50);
+
+                    // Delay1ms(50);
+                    Delay50ms();
                     CHANGE_BUFFER = 0;
 
                     if(strlen(TX_BUFFER) >= 36)
@@ -361,11 +403,14 @@ void RUN()
                                 SMS_CNT[0] = TOCHAR(k);
                                 SMS_CNT[1] = '\0';
                             }			
-                            STATUS = NEWSMS;
+                            // STATUS = NEWSMS;
+                            STATUS = SHUT;
+
                             TX_INDEX = 0;
                             i = 0;
                             FORMAT_TX_BUFFER();
-                            Delay1ms(30);
+                            // Delay1ms(30);
+                            Delay50ms();
 
                             break;
                         }
@@ -378,7 +423,6 @@ void RUN()
                 i++;
             }
         }
-        P0 = 0X00;
     }
 
     else if(STATUS == SHUT)
@@ -390,21 +434,35 @@ void RUN()
         
         // SEND_STRING(CMD_SHUTGPRS);
         // Delay1ms(5);
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
-
-        SEND_STRING(CMD_SHUT);
-        Delay1ms(30);
-
-        p = strstr(RX_BUFFER,"SHUT OK");
-        if(p != NULL)
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
+        if(i >= 5)
         {
-            STATUS = SIGNAL;
+            STATUS = AIRPLANE;
+            i = 0;
         }
         else
         {
-            STATUS = AIRPLANE;
-        }      
+            RX_INDEX = 0;
+            SEND_STRING(CMD_SHUT);
+
+            // Delay1ms(30);
+            Delay50ms();
+
+            p = strstr(RX_BUFFER,"SHUT OK");
+            if(p != NULL)
+            {
+                // STATUS = SIGNAL;
+                STATUS = NEWSMS;
+                Delay50ms();
+                Delay50ms();
+                i = 0;
+            }
+            else
+            {
+                i++;
+            }   
+        }   
     }
 
     else if(STATUS == NEWSMS)
@@ -414,11 +472,15 @@ void RUN()
         //  NO  :   SHUT
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
+        RX_INDEX = 0;
         SEND_STRING(CMD_APN);
-        Delay1ms(50);
+
+        // Delay1ms(50);
+        Delay50ms();
+        Delay50ms();
 
         p = strstr(RX_BUFFER,"OK");
         if(p != NULL)
@@ -438,11 +500,15 @@ void RUN()
         //  NO  :   SHUT
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
+        RX_INDEX = 0;
         SEND_STRING(CMD_GPRS);
-        Delay1ms(50);
+
+        // Delay1ms(50);
+        Delay50ms();
+        Delay50ms();
 
         p = strstr(RX_BUFFER,"OK");
         if(p != NULL)
@@ -462,16 +528,23 @@ void RUN()
         //  NO  :   SHUT
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
+        RX_INDEX = 0;
         SEND_STRING(CMD_IP);
-        Delay1ms(30);
+
+        // Delay1ms(50);
+        Delay50ms();
+        Delay50ms();
 
         p = strstr(RX_BUFFER,".");
         if(p != NULL)
         {
             STATUS = IP;
+        }else
+        {
+            STATUS = SHUT;
         }
     }
 
@@ -482,11 +555,15 @@ void RUN()
         //  NO  :   SHUT
         unsigned char *p;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
+        RX_INDEX = 0;
         SEND_STRING(CMD_SERVER);
-        Delay1ms(50);
+
+        // Delay1ms(50);
+        Delay50ms();
+        Delay50ms();
 
         p = strstr(RX_BUFFER,"CONNECT OK");
         if(p != NULL)
@@ -506,11 +583,12 @@ void RUN()
         //  NO  :   SERVER  i > 2 SHUT
         unsigned char *p;
         unsigned char *g;
+
         int j;
         int k;
 
-        CLEAN_RX_BUFFER();
-        Delay1ms(30);
+        // CLEAN_RX_BUFFER();
+        // Delay1ms(30);
 
         if(i > 2)
         {
@@ -519,29 +597,40 @@ void RUN()
         }
         else
         {
+            RX_INDEX = 0;
             SEND_STRING(CMD_SEND);
-            Delay1ms(30);
+
+            // Delay1ms(30);
+            Delay50ms();
 
             p = strstr(RX_BUFFER,">");
             if(p != NULL)
             {
                 // CLEAN_RX_BUFFER();
                 // Delay1ms(30);
+                RX_INDEX = 0 ;
+                DISABLE_INTERRUPT();
 
                 for(j = 0;j < strlen(TX_BUFFER); j++)
                 {
                     SEND_BYTE(TX_BUFFER[j]);
                 }
+                // Delay1ms(5);
                 SEND_BYTE(0X1A);
-                Delay1ms(30); //延迟太低就收不到反馈
+
+                ENABLE_INTERRUPT();
+
+                // Delay1ms(30); // 30 延迟太低就收不到反馈
+                Delay50ms();
 
                 g = strstr(RX_BUFFER,"OK");  //  "SEND OK"
                 if(g != NULL)
                 {
+                    DEBUG();
+                    RX_INDEX = 0;
 
                     SEND_STRING(CMD_DLSMS);
                     
-
                     for(k = 0; k < strlen(SMS_CNT); k++)
                     {
                         SEND_BYTE(SMS_CNT[k]);
@@ -550,13 +639,16 @@ void RUN()
                     SEND_BYTE(0X0D);
                     SEND_BYTE(0X0A);
 
+                    Delay50ms();
+
                     CLEAN_TX_BUFFER();
-                    STATUS = SHUT;
+                    STATUS = SEND;
                     i=0;
 
                 }
                 else
                 {
+                    DEBUG();
                     i++;
                 }
             }
@@ -564,9 +656,18 @@ void RUN()
             {
                 i++;
             } 
-            DEBUG();           
+            // DEBUG();           
         }        
     }
+    else if(STATUS == SEND)
+    {
+        SEND_STRING(CMD_CLOSE);
+        Delay50ms();
+        SEND_STRING(CMD_SHUT);
+        RX_INDEX = 0;
+        STATUS = SIGNAL;
+    }
+    
 }
 
 //  1.发送 AT 和模块通信
@@ -602,11 +703,21 @@ void SEND_STRING(unsigned char *p)
     }
 }
 
-void CLEAN_RX_BUFFER()
+void ENABLE_INTERRUPT()
 {
-    memset(RX_BUFFER,0,sizeof(RX_BUFFER));
-    RX_INDEX = 0;
+    ES = 1;
 }
+
+void DISABLE_INTERRUPT()
+{
+    ES = 0;
+}
+
+// void CLEAN_RX_BUFFER()
+// {
+//     memset(RX_BUFFER,0,sizeof(RX_BUFFER));
+//     RX_INDEX = 0;
+// }
 
 void CLEAN_TX_BUFFER()
 {
@@ -685,6 +796,35 @@ void Delay1ms(unsigned int i)
 	}
 }
 
+void Delay50ms()		//@22.1184MHz # 50ms
+{
+	unsigned char i, j;
+
+	i = 180;
+	j = 73;
+	do
+	{
+		while (--j);
+	} while (--i);
+}
+
+
+// void DOG() interrupt 1
+// {
+//     TH0 = 0XDB;     // 定时器0初始值 56319
+//     TL0 = 0XFF;     // 定时器0初始值
+//     time_cnt++;
+
+//     if(time_cnt > 800)
+//     {
+//         TR0 = 0;
+//         time_cnt = 0;
+//         WDT_CONTR = 0X37;
+//         TR0 = 1;
+//     }
+    
+// }
+
 void SERIAL() interrupt 4
 {
     if(RI)
@@ -699,7 +839,7 @@ void SERIAL() interrupt 4
                 RX_INDEX = 0;
             }
         }
-        else
+        else if(CHANGE_BUFFER)
         {
             RI = 0;
             TX_BUFFER[TX_INDEX++] = SBUF;
@@ -708,27 +848,37 @@ void SERIAL() interrupt 4
             {
                 TX_INDEX = 0;
             }
-        }
-        
+        }   
     }
 }
 
 void UART()
 {
-    SCON = 0X52;
-    PCON = 0X80;
-    TMOD = 0X20;
-    TH1  = 0XFD;
-    TR1  = 0XFD;
+    SCON = 0X52;    // 0101 0010    D7D6 01表示每帧传输10位数据（1起始，8数据位，1停止位）
+                    //              D4 REN = 1 表示允许接收
+                    //              D1 TI  = 1 表示发送中断
+    PCON = 0X80;    // 1000 0000    D7 SMOD = 1 表示波特率提高一倍
+    TMOD = 0X20;    // 0010 0000    D5D4 10表示方式2：定时器8位，自动重装
+                    // 改：0010 0001    启动定时器0
+    TH1  = 0XFF;    // 波特率19200
+    TL1  = 0XFF;
 
-    ES   = 1;
-    EA   = 1;
-    TR1  = 1;
+
+    ES   = 1;       // 允许串口中断
+    EA   = 1;       // 中断总开关
+    TR1  = 1;       // 启动定时器1
+    ET1  = 0;       // 禁止定时器1中断
+
+
+    // ET0 = 1;        // 定时器0 允许中断
+    // TH0 = 0XDB;     // 定时器0初始值
+    // TL0 = 0XFF;     // 定时器0初始值
+    // TR0 = 1;        // 启动定时器0
 }
 
 void DEBUG()
 {
-    Delay1ms(100);
+    Delay50ms();
 
     SEND_BYTE('D');
     SEND_BYTE('E');
@@ -746,5 +896,5 @@ void DEBUG()
     SEND_BYTE('U');
     SEND_BYTE('G');
 
-    Delay1ms(100);
+    Delay50ms();
 }
